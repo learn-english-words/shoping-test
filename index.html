@@ -242,8 +242,8 @@ sideDeck(FLOOR_Y*2,7.4);
 /* ---------- ممشى زجاجي عند مخرج السلالم ---------- */
 // منصة حقيقية تصل السلم بالممرين الجانبيين، ثم يتفرع الزائر يميناً أو يساراً.
 const bridgeFloorMat=new THREE.MeshPhysicalMaterial({color:0xdff7ff,roughness:.08,metalness:.08,transparent:true,opacity:.78,transmission:.18,clearcoat:.75});
-const upperBridge=new THREE.Mesh(new THREE.BoxGeometry(28,.24,5.6),bridgeFloorMat);
-upperBridge.position.set(0,FLOOR_Y,-3.0);upperBridge.receiveShadow=true;scene.add(upperBridge);
+const upperBridge=new THREE.Mesh(new THREE.BoxGeometry(28,.24,8.6),bridgeFloorMat);
+upperBridge.position.set(0,FLOOR_Y,-3.35);upperBridge.receiveShadow=true;scene.add(upperBridge);
 // حواف زجاجية قصيرة على جانبي الممشى مع ترك الوسط مفتوحاً للسلالم.
 const mallGlassColliders=[];
 function bridgeRail(x,z,w,d){
@@ -252,13 +252,15 @@ function bridgeRail(x,z,w,d){
  mallGlassColliders.push({x,z,hw:w/2,hd:d/2,floor:1});
  const cap=new THREE.Mesh(new THREE.BoxGeometry(w+.05,.08,d+.05),MAT.gold);cap.position.set(x,FLOOR_Y+1.27,z);scene.add(cap);
 }
-// جهة دخول السلالم: نحافظ على الحماية حول الفتحة.
-bridgeRail(-8.0,-.28,12.0,.10); bridgeRail(8.0,-.28,12.0,.10);
+// حماية فتحة السلالم من الخلف: قطعتان زجاجيتان تغلقان الفتحتين الجانبيتين،
+// مع إبقاء مسار السلمين في الوسط مفتوحاً.
+bridgeRail(-8.55,0.95,10.9,.10);
+bridgeRail( 8.55,0.95,10.9,.10);
 
-// عند نهاية السلم: اقفل الطريق المستقيم أمام اللاعب بالقزاز،
-// واترك اليمين واليسار مفتوحين بالكامل حتى يلف للممرات الجانبية.
-bridgeRail(0,-5.72,7.8,.10);
-// مهم: لا نضع أي قزاز طولي على x=±3.75 هنا لأنه كان يقفل اليمين واليسار.
+// بعد الوصول لأعلى السلم يوجد ممشى أوسع. أمام اللاعب قزاز يمنع السقوط،
+// بينما نهايتا الممشى يميناً ويساراً مفتوحتان بالكامل للاتصال بممرات المحلات.
+bridgeRail(0,-7.62,11.5,.10);
+// لا نضع قزازاً على x=±14: هذه هي مخارج اليمين واليسار المطلوبة.
 
 /* سقف سماوي بيضاوي مضيء مستوحى من المرجع */
 const skyCanvas=document.createElement('canvas'); skyCanvas.width=1024; skyCanvas.height=512;
@@ -1054,7 +1056,9 @@ function animate() {
       // نثبت X/Z داخل الكابينة أثناء الرحلة فقط، ولا ننقله فجأة عند الوصول.
       camera.position.x=ELEV.x;
       camera.position.z=ELEV.z-.10;
-      camera.position.y += dy;
+      // اربط ارتفاع عين اللاعب مباشرة بأرضية الكابينة في كل إطار.
+      // بهذه الطريقة حتى لو حصل Frame بطيء لا ينفصل اللاعب عن المصعد.
+      camera.position.y = y + EYE;
       elevatorRide.lastCarY=y;
       if(k>=1){
         const arrived=elevatorRide.to;
@@ -1140,7 +1144,9 @@ function animate() {
           else if (m === db) p.z = -2.2; else p.z = 8.3;
         }
       }
-      camera.position.y = LEVEL_Y * floor + EYE + Math.sin(bobT) * 0.045;
+      // أثناء رحلة المصعد لا نعيد Y إلى ارتفاع الطابق؛ المصعد نفسه يحمل اللاعب كل Frame.
+      // هذا هو الفرق بين الحركة الحقيقية والـ teleport الذي كان يحدث سابقاً.
+      if(!elevatorRide) camera.position.y = LEVEL_Y * floor + EYE + Math.sin(bobT) * 0.045;
     } else {
       camera.position.x=Math.max(200-settings.room_width/2+.5,Math.min(200+settings.room_width/2-.5,camera.position.x));
       camera.position.z=Math.max(-settings.room_depth/2+.5,Math.min(settings.room_depth/2-.5,camera.position.z));
