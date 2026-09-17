@@ -144,8 +144,8 @@ const products=itemRows.filter(p=>p.visible).map(p=>({...p,cat:p.category,desc:p
 /* ============================================================ */
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xc9e8f2);
-scene.fog = new THREE.Fog(0xd8edf3, 55, 145);
+scene.background = new THREE.Color(0xe9edf0);
+scene.fog = new THREE.Fog(0xf1f0ec, 82, 180);
 
 const camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 250);
 camera.rotation.order = 'YXZ';
@@ -158,7 +158,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.82;
+renderer.toneMappingExposure = 1.03;
 document.getElementById('app').appendChild(renderer.domElement);
 
 /* ---------- أدوات نصوص ---------- */
@@ -177,9 +177,9 @@ function makeSign(text, color, size=90, w=1024, h=200) {
 }
 
 /* ---------- إضاءة دافئة واقعية ---------- */
-scene.add(new THREE.HemisphereLight(0xdff8ff,0x4d5366,1.05));
-scene.add(new THREE.AmbientLight(0xffffff,0.38));
-const sun = new THREE.DirectionalLight(0xffffff,2.0);
+scene.add(new THREE.HemisphereLight(0xfff8ed,0x66717a,1.35));
+scene.add(new THREE.AmbientLight(0xfff7ea,0.52));
+const sun = new THREE.DirectionalLight(0xfff4df,2.35);
 sun.position.set(12, 22, 10); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
@@ -207,12 +207,12 @@ const FUTURE = {
 
 /* ---------- ألوان واقعية ---------- */
 const MAT = {
-  floor:  new THREE.MeshPhysicalMaterial({ color:0xcfd5df, roughness:0.18, metalness:0.05, clearcoat:0.7, clearcoatRoughness:0.12 }),
-  slab:   new THREE.MeshStandardMaterial({ color:0xe8eef5, roughness:0.24, metalness:0.08 }),
+  floor:  new THREE.MeshPhysicalMaterial({ color:0xeeeae2, roughness:0.10, metalness:0.02, clearcoat:1.0, clearcoatRoughness:0.05, reflectivity:0.85 }),
+  slab:   new THREE.MeshStandardMaterial({ color:0xf5f1e9, roughness:0.22, metalness:0.03 }),
   wall:   new THREE.MeshStandardMaterial({ color:0xe9eef8, roughness:0.38, metalness:0.05, side:THREE.BackSide }),
   ceil:   new THREE.MeshStandardMaterial({ color:0xf2ede2, roughness:0.95, side:THREE.BackSide }),
   gold:   new THREE.MeshStandardMaterial({ color:FUTURE.chrome, roughness:0.18, metalness:0.82, emissive:FUTURE.cyan, emissiveIntensity:0.06 }),
-  glass:  new THREE.MeshPhysicalMaterial({ color:0xbcefff, roughness:0.03, metalness:0.08, transparent:true, opacity:0.30, transmission:0.35, thickness:0.08 }),
+  glass:  new THREE.MeshPhysicalMaterial({ color:0xe4f7fb, roughness:0.02, metalness:0.02, transparent:true, opacity:0.22, transmission:0.72, thickness:0.12, clearcoat:1 }),
   dark:   new THREE.MeshStandardMaterial({ color:0x2a2a30, roughness:0.5, metalness:0.6 }),
   escal:  new THREE.MeshStandardMaterial({ color:0x9aa0a8, roughness:0.35, metalness:0.85 }),
 };
@@ -222,7 +222,7 @@ const LEVEL_Y=FLOOR_Y+.2,CEILING_F0=FLOOR_Y-.2,CEILING_F1=HALL_H-1.2;
 
 /* ---------- قاعة المول الجديدة: أتريوم مفتوح ومرتفع ---------- */
 // بدل الصندوق المغلق القديم: جداران جانبيان وخلفيتان فقط، والسقف مرتفع جداً.
-const wallMat=new THREE.MeshStandardMaterial({color:0xd9dce5,roughness:.55,metalness:.02});
+const wallMat=new THREE.MeshStandardMaterial({color:0xe7e2da,roughness:.48,metalness:.01});
 function boxMesh(w,h,d,x,y,z,mat=wallMat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.receiveShadow=true;scene.add(m);return m;}
 boxMesh(.45,HALL_H,HALL_L,-HALL_W/2,HALL_H/2,0);
 boxMesh(.45,HALL_H,HALL_L, HALL_W/2,HALL_H/2,0);
@@ -241,7 +241,7 @@ sideDeck(FLOOR_Y*2,7.4);
 
 /* ---------- ممشى زجاجي عند مخرج السلالم ---------- */
 // منصة حقيقية تصل السلم بالممرين الجانبيين، ثم يتفرع الزائر يميناً أو يساراً.
-const bridgeFloorMat=new THREE.MeshPhysicalMaterial({color:0xdff7ff,roughness:.08,metalness:.08,transparent:true,opacity:.78,transmission:.18,clearcoat:.75});
+const bridgeFloorMat=new THREE.MeshPhysicalMaterial({color:0xf1eee8,roughness:.10,metalness:.02,transparent:false,opacity:1,transmission:0,clearcoat:1});
 const upperBridge=new THREE.Mesh(new THREE.BoxGeometry(28,.24,8.6),bridgeFloorMat);
 upperBridge.position.set(0,FLOOR_Y,-3.35);upperBridge.receiveShadow=true;scene.add(upperBridge);
 // حواف زجاجية قصيرة على جانبي الممشى مع ترك الوسط مفتوحاً للسلالم.
@@ -335,6 +335,37 @@ const gfloor = new THREE.Mesh(new THREE.PlaneGeometry(HALL_W, HALL_L), MAT.floor
 gfloor.rotation.x = -Math.PI/2; gfloor.position.y = 0.01;
 gfloor.receiveShadow = true;
 scene.add(gfloor);
+
+
+/* ---------- V6: خامات وتفاصيل معمارية واقعية ---------- */
+const warmLineMat=new THREE.MeshBasicMaterial({color:0xffe2b5,transparent:true,opacity:.92});
+// خطوط إضاءة دافئة أسفل حواف الأدوار
+for(const y of [FLOOR_Y-.18,FLOOR_Y*2-.18]) for(const side of [-1,1]){
+  const depth=y>FLOOR_Y+2?7.4:9.0;
+  const x=side*(HALL_W/2-depth+.10);
+  const line=new THREE.Mesh(new THREE.BoxGeometry(.08,.07,HALL_L-5),warmLineMat);
+  line.position.set(x,y,0);scene.add(line);
+}
+// خطوط رخام خفيفة في الأرضية
+const marbleLineMat=new THREE.MeshBasicMaterial({color:0xb7aaa0,transparent:true,opacity:.18,depthWrite:false});
+for(let z=-40;z<=40;z+=8){const l=new THREE.Mesh(new THREE.PlaneGeometry(HALL_W-1,.025),marbleLineMat);l.rotation.x=-Math.PI/2;l.position.set(0,.022,z);scene.add(l);}
+for(let x=-20;x<=20;x+=8){const l=new THREE.Mesh(new THREE.PlaneGeometry(.025,HALL_L-2),marbleLineMat);l.rotation.x=-Math.PI/2;l.position.set(x,.023,0);scene.add(l);}
+// أحواض نباتات واقعية مبسطة
+function addPlanter(x,y,z,s=1){
+ const pot=new THREE.Mesh(new THREE.BoxGeometry(1.05*s,.78*s,1.05*s),new THREE.MeshStandardMaterial({color:0x303438,roughness:.55,metalness:.08}));pot.position.set(x,y+.39*s,z);scene.add(pot);
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.08*s,.12*s,1.05*s,8),new THREE.MeshStandardMaterial({color:0x76523a,roughness:.8}));trunk.position.set(x,y+1.18*s,z);scene.add(trunk);
+ const leafMat=new THREE.MeshStandardMaterial({color:0x2d6b45,roughness:.72});
+ for(const [dx,dy,dz,sc] of [[0,1.9,0,.7],[.35,1.6,.12,.5],[-.34,1.55,-.12,.5],[.12,1.5,.35,.45],[-.1,1.65,-.35,.45]]){
+  const leaf=new THREE.Mesh(new THREE.SphereGeometry(sc*s,12,8),leafMat);leaf.scale.set(.75,1.15,.75);leaf.position.set(x+dx*s,y+dy*s,z+dz*s);scene.add(leaf);
+ }
+}
+for(const z of [-30,-18,-6,8,20,32]){addPlanter(-12.2,0,z,.78);addPlanter(12.2,0,z,.78);}
+for(const z of [-28,-14,14,28]){addPlanter(-16.2,FLOOR_Y+.2,z,.58);addPlanter(16.2,FLOOR_Y+.2,z,.58);}
+// جلسات بسيطة في قلب الأتريوم
+const seatMat=new THREE.MeshStandardMaterial({color:0xb6a795,roughness:.62});
+for(const [x,z,r] of [[-6,-15,0],[7,-18,Math.PI/2],[-8,17,0],[7,14,Math.PI/2]]){
+ const seat=new THREE.Mesh(new THREE.BoxGeometry(3.2,.48,1.15),seatMat);seat.position.set(x,.28,z);seat.rotation.y=r;seat.castShadow=true;scene.add(seat);
+}
 
 /* ---------- إضاءة سقفية مرتفعة فقط ---------- */
 for(let z=-36;z<=36;z+=12){
@@ -500,6 +531,22 @@ function buildStorefront(st, y) {
   shutter.rotation.y = facing;
   scene.add(shutter);
 
+
+  // عمق حقيقي للمتجر + إضاءة عرض داخلية
+  const interiorMat=new THREE.MeshStandardMaterial({color:0xf3eadb,roughness:.5,emissive:0xffd7a0,emissiveIntensity:.12});
+  const interior=new THREE.Mesh(new THREE.BoxGeometry(.18,3.55,5.75),interiorMat);
+  interior.position.set(st.side*(HALL_W/2-.92),y+1.82,st.z);scene.add(interior);
+  const blackHeader=new THREE.Mesh(new THREE.BoxGeometry(.16,.78,6.45),new THREE.MeshStandardMaterial({color:0x17191b,roughness:.32,metalness:.28}));
+  blackHeader.position.set(st.side*(HALL_W/2-.73),y+3.72,st.z);scene.add(blackHeader);
+  // رفوف ومنتجات مبسطة مرئية من الممر
+  const shelfMat=new THREE.MeshStandardMaterial({color:0xd6c5ae,roughness:.55});
+  for(const dz of [-1.75,0,1.75]){
+    const shelf=new THREE.Mesh(new THREE.BoxGeometry(.22,.08,1.25),shelfMat);shelf.position.set(st.side*(HALL_W/2-1.02),y+1.45,st.z+dz);scene.add(shelf);
+    for(let k=0;k<3;k++){
+      const item=new THREE.Mesh(new THREE.BoxGeometry(.28,.48,.24),new THREE.MeshStandardMaterial({color:[0xc89f74,0x8397a5,0x9f826f][k],roughness:.45}));
+      item.position.set(st.side*(HALL_W/2-1.15),y+1.73,st.z+dz-.36+k*.36);scene.add(item);
+    }
+  }
   const sign = makeSign(st.name, hex, 75);
   sign.scale.set(.75,.5,.75);
   sign.position.set(st.side * (HALL_W/2 - 0.6), y + 3.55, st.z);
