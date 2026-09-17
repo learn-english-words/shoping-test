@@ -367,6 +367,59 @@ for(const [x,z,r] of [[-6,-15,0],[7,-18,Math.PI/2],[-8,17,0],[7,14,Math.PI/2]]){
  const seat=new THREE.Mesh(new THREE.BoxGeometry(3.2,.48,1.15),seatMat);seat.position.set(x,.28,z);seat.rotation.y=r;seat.castShadow=true;scene.add(seat);
 }
 
+
+/* ---------- V7: تشطيب معماري فاخر أقرب للرندر الواقعي ---------- */
+const V7={stone:0xf1eee9,stone2:0xe5dfd7,dark:0x202428,brass:0xb79b6a,warm:0xffdfb0};
+const stoneMat=new THREE.MeshPhysicalMaterial({color:V7.stone,roughness:.22,metalness:.03,clearcoat:.55,clearcoatRoughness:.18});
+const darkMat=new THREE.MeshStandardMaterial({color:V7.dark,roughness:.28,metalness:.35});
+const brassMat=new THREE.MeshStandardMaterial({color:V7.brass,roughness:.2,metalness:.82});
+const warmGlow=new THREE.MeshBasicMaterial({color:V7.warm,transparent:true,opacity:.92});
+// كسوة أعمدة مربعة فاخرة بدل الفراغات الرمادية الطويلة
+for(const side of [-1,1]) for(let z=-36;z<=36;z+=12){
+ const x=side*(HALL_W/2-5.55);
+ const wrap=new THREE.Mesh(new THREE.BoxGeometry(.82,13.2,.82),stoneMat);wrap.position.set(x,6.6,z);wrap.castShadow=true;scene.add(wrap);
+ const inset=new THREE.Mesh(new THREE.BoxGeometry(.86,9.4,.055),darkMat);inset.position.set(x-side*.43,6.7,z);inset.rotation.y=Math.PI/2;scene.add(inset);
+ const lamp=new THREE.Mesh(new THREE.BoxGeometry(.90,7.6,.025),warmGlow);lamp.position.set(x-side*.465,6.7,z);lamp.rotation.y=Math.PI/2;scene.add(lamp);
+}
+// كرانيش/إضاءة خطية دافئة مستمرة حول واجهات الدورين
+for(const y of [4.72,9.72]) for(const side of [-1,1]){
+ const x=side*(HALL_W/2-5.15);
+ const cove=new THREE.Mesh(new THREE.BoxGeometry(.16,.10,HALL_L-3),warmGlow);cove.position.set(x,y,0);scene.add(cove);
+ const fascia=new THREE.Mesh(new THREE.BoxGeometry(.48,.34,HALL_L-3),stoneMat);fascia.position.set(x+side*.22,y+.18,0);scene.add(fascia);
+}
+// حافة أتريوم أكثر فخامة: زجاج شفاف + مسكة معدنية علوية
+const luxuryGlass=new THREE.MeshPhysicalMaterial({color:0xdaf7ff,transparent:true,opacity:.18,roughness:.02,metalness:.05,transmission:.62,thickness:.08,side:THREE.DoubleSide});
+function luxuryRail(x,y,z,w,d){
+ const g=new THREE.Group();
+ const gl=new THREE.Mesh(new THREE.BoxGeometry(w,1.05,d),luxuryGlass);gl.position.y=.58;g.add(gl);
+ const top=new THREE.Mesh(new THREE.BoxGeometry(w+.07,.075,d+.07),brassMat);top.position.y=1.12;g.add(top);
+ g.position.set(x,y,z);scene.add(g);
+}
+// حواجز طويلة على جانبي الأتريوم، مع ترك منطقة السلالم/المصعد مفتوحة وظيفياً
+for(const z of [-28,-17,17,28]){luxuryRail(-8.6,FLOOR_Y+.18,z,10,.09);luxuryRail(8.6,FLOOR_Y+.18,z,10,.09);}
+// جلسات أنعم مع طاولات ونباتات في الدور الأرضي
+const sofaMat=new THREE.MeshStandardMaterial({color:0xc8bbaa,roughness:.7});
+for(const [x,z,rot] of [[-7,-24,0],[7,-24,0],[-7,24,0],[7,24,0]]){
+ const sofa=new THREE.Mesh(new THREE.BoxGeometry(3.4,.48,1.2),sofaMat);sofa.position.set(x,.28,z);sofa.rotation.y=rot;sofa.castShadow=true;scene.add(sofa);
+ const back=new THREE.Mesh(new THREE.BoxGeometry(3.4,.72,.22),sofaMat);back.position.set(x,.72,z+.5);scene.add(back);
+ const table=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.36,32),brassMat);table.position.set(x+(x<0?2.3:-2.3),.2,z);scene.add(table);
+}
+// مصابيح سقف نقطية موزعة لتعطي عمقاً بدلاً من الإضاءة المسطحة
+for(let z=-38;z<=38;z+=5.5) for(const x of [-18,-12,12,18]){
+ const spotDisc=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.035,16),new THREE.MeshBasicMaterial({color:0xfff4df}));spotDisc.rotation.x=Math.PI/2;spotDisc.position.set(x,HALL_H-1.08,z);scene.add(spotDisc);
+ const pl=new THREE.PointLight(0xffe7c4,.28,7);pl.position.set(x,HALL_H-1.3,z);scene.add(pl);
+}
+// حلقة سقف بيضاوية إضافية دافئة حول القبة السماوية
+for(const scale of [1,1.13]){
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(11.5*scale,.075,12,128),warmGlow);ring.scale.z=.58;ring.rotation.x=Math.PI/2;ring.position.set(0,HALL_H-.82,0);scene.add(ring);
+}
+// مداخل محلات ببوابات سوداء/نحاسية أكثر واقعية أمام الواجهات الحالية
+for(const st of storefronts){
+ const y=st.floor===1?LEVEL_Y:0, side=st.side, x=side*(HALL_W/2-.76);
+ const head=new THREE.Mesh(new THREE.BoxGeometry(.22,.72,6.8),darkMat);head.position.set(x,y+3.78,st.z);scene.add(head);
+ for(const dz of [-3.28,3.28]){const jamb=new THREE.Mesh(new THREE.BoxGeometry(.22,3.55,.18),brassMat);jamb.position.set(x,y+1.9,st.z+dz);scene.add(jamb);}
+}
+
 /* ---------- إضاءة سقفية مرتفعة فقط ---------- */
 for(let z=-36;z<=36;z+=12){
  for(const x of [-14,14]){
