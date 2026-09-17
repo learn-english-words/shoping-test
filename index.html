@@ -249,10 +249,13 @@ function bridgeRail(x,z,w,d){
  const glass=new THREE.Mesh(new THREE.BoxGeometry(w,1.05,d),MAT.glass);glass.position.set(x,FLOOR_Y+.72,z);scene.add(glass);
  const cap=new THREE.Mesh(new THREE.BoxGeometry(w+.05,.08,d+.05),MAT.gold);cap.position.set(x,FLOOR_Y+1.27,z);scene.add(cap);
 }
+// جهة دخول السلالم: نحافظ على الحماية حول الفتحة.
 bridgeRail(-8.0,-.28,12.0,.10); bridgeRail(8.0,-.28,12.0,.10);
-bridgeRail(-8.0,-5.72,12.0,.10); bridgeRail(8.0,-5.72,12.0,.10);
-// زجاج صغير أمام فتحة السلم حتى يكون المسار واضحاً: يمين أو يسار.
-bridgeRail(-3.75,-3.0,.10,5.35); bridgeRail(3.75,-3.0,.10,5.35);
+
+// عند نهاية السلم: اقفل الطريق المستقيم أمام اللاعب بالقزاز،
+// واترك اليمين واليسار مفتوحين بالكامل حتى يلف للممرات الجانبية.
+bridgeRail(0,-5.72,7.8,.10);
+// مهم: لا نضع أي قزاز طولي على x=±3.75 هنا لأنه كان يقفل اليمين واليسار.
 
 /* سقف سماوي بيضاوي مضيء مستوحى من المرجع */
 const skyCanvas=document.createElement('canvas'); skyCanvas.width=1024; skyCanvas.height=512;
