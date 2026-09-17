@@ -159,10 +159,10 @@ const camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 250)
 camera.rotation.order = 'YXZ';
 camera.position.set(settings.spawn_x,1.7,settings.spawn_z);
 
-const renderer = new THREE.WebGLRenderer({ antialias:true });
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
+renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -188,22 +188,12 @@ function makeSign(text, color, size=90, w=1024, h=200) {
 scene.add(new THREE.HemisphereLight(0xeaf5ff,0x657789,1.45));
 scene.add(new THREE.AmbientLight(0xdcecff,0.58));
 const sun = new THREE.DirectionalLight(0xeaf4ff,2.25);
-sun.position.set(12, 22, 10); sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
+sun.position.set(12, 22, 10); sun.castShadow = false;
+sun.shadow.mapSize.set(512, 512);
 sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
 sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
 scene.add(sun);
-// كرات إضاءة دافئة على طول الممرات
-[[-9,4.6,0,0],[9,4.6,0,0],[-9,9.6,0,1],[9,9.6,0,1]].forEach(([x,y,z,f])=>{
-  const pl = new THREE.PointLight(0xbfefff, 4.5, 26);
-  pl.position.set(x, y, z + (f? 0 : 0)); scene.add(pl);
-});
-const warmA = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmA.position.set(-9, 4.6, 0); scene.add(warmA);
-const warmB = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmB.position.set(9, 4.6, 0); scene.add(warmB);
-const warmC = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmC.position.set(-9, 9.6, 0); scene.add(warmC);
-const warmD = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmD.position.set(9, 9.6, 0); scene.add(warmD);
-const warmE = new THREE.PointLight(0xd8e8ff, 2.5, 22); warmE.position.set(0, 9, 25); scene.add(warmE);
-const warmF = new THREE.PointLight(0xd8e8ff, 2.5, 22); warmF.position.set(0, 9, -25); scene.add(warmF);
+// Performance: corridor illumination is baked into emissive strips; extra real-time point lights removed.
 
 /* ---------- هوية المول المستقبلية ---------- */
 const FUTURE = {
@@ -385,7 +375,7 @@ const warmGlow=new THREE.MeshBasicMaterial({color:V7.warm,transparent:true,opaci
 // كسوة أعمدة مربعة فاخرة بدل الفراغات الرمادية الطويلة
 for(const side of [-1,1]) for(let z=-36;z<=36;z+=12){
  const x=side*(HALL_W/2-5.55);
- const wrap=new THREE.Mesh(new THREE.BoxGeometry(.82,13.2,.82),stoneMat);wrap.position.set(x,6.6,z);wrap.castShadow=true;scene.add(wrap);
+ const wrap=new THREE.Mesh(new THREE.BoxGeometry(.82,13.2,.82),stoneMat);wrap.position.set(x,6.6,z);wrap.castShadow=false;scene.add(wrap);
  const inset=new THREE.Mesh(new THREE.BoxGeometry(.86,9.4,.055),darkMat);inset.position.set(x-side*.43,6.7,z);inset.rotation.y=Math.PI/2;scene.add(inset);
  const lamp=new THREE.Mesh(new THREE.BoxGeometry(.90,7.6,.025),warmGlow);lamp.position.set(x-side*.465,6.7,z);lamp.rotation.y=Math.PI/2;scene.add(lamp);
 }
@@ -396,7 +386,7 @@ for(const y of [4.72,9.72]) for(const side of [-1,1]){
  const fascia=new THREE.Mesh(new THREE.BoxGeometry(.48,.34,HALL_L-3),stoneMat);fascia.position.set(x+side*.22,y+.18,0);scene.add(fascia);
 }
 // حافة أتريوم أكثر فخامة: زجاج شفاف + مسكة معدنية علوية
-const luxuryGlass=new THREE.MeshPhysicalMaterial({color:0xdaf7ff,transparent:true,opacity:.18,roughness:.02,metalness:.05,transmission:.62,thickness:.08,side:THREE.DoubleSide});
+const luxuryGlass=new THREE.MeshStandardMaterial({color:0xbfd8e8,transparent:true,opacity:.22,roughness:.16,metalness:.05,side:THREE.DoubleSide,depthWrite:false});
 function luxuryRail(x,y,z,w,d){
  const g=new THREE.Group();
  const gl=new THREE.Mesh(new THREE.BoxGeometry(w,1.05,d),luxuryGlass);gl.position.y=.58;g.add(gl);
@@ -408,14 +398,14 @@ for(const z of [-28,-17,17,28]){luxuryRail(-8.6,FLOOR_Y+.18,z,10,.09);luxuryRail
 // جلسات أنعم مع طاولات ونباتات في الدور الأرضي
 const sofaMat=new THREE.MeshStandardMaterial({color:0xaebbc8,roughness:.7});
 for(const [x,z,rot] of [[-7,-24,0],[7,-24,0],[-7,24,0],[7,24,0]]){
- const sofa=new THREE.Mesh(new THREE.BoxGeometry(3.4,.48,1.2),sofaMat);sofa.position.set(x,.28,z);sofa.rotation.y=rot;sofa.castShadow=true;scene.add(sofa);
+ const sofa=new THREE.Mesh(new THREE.BoxGeometry(3.4,.48,1.2),sofaMat);sofa.position.set(x,.28,z);sofa.rotation.y=rot;sofa.castShadow=false;scene.add(sofa);
  const back=new THREE.Mesh(new THREE.BoxGeometry(3.4,.72,.22),sofaMat);back.position.set(x,.72,z+.5);scene.add(back);
  const table=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.36,32),brassMat);table.position.set(x+(x<0?2.3:-2.3),.2,z);scene.add(table);
 }
 // مصابيح سقف نقطية موزعة لتعطي عمقاً بدلاً من الإضاءة المسطحة
 for(let z=-38;z<=38;z+=5.5) for(const x of [-18,-12,12,18]){
  const spotDisc=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.035,16),new THREE.MeshBasicMaterial({color:0xe8f4ff}));spotDisc.rotation.x=Math.PI/2;spotDisc.position.set(x,HALL_H-1.08,z);scene.add(spotDisc);
- const pl=new THREE.PointLight(0xcfe8ff,.30,7);pl.position.set(x,HALL_H-1.3,z);scene.add(pl);
+ // decorative emissive ceiling spot only (no real-time PointLight for performance)
 }
 // حلقة سقف بيضاوية إضافية دافئة حول القبة السماوية
 for(const scale of [1,1.13]){
@@ -544,7 +534,7 @@ let elevatorCar=null, elevatorDoors=[], elevatorRide=null, elevatorFloor=0;
    d.position.set(x,1.42,-.94); d.userData.closedX=x; d.userData.openX=x<0?-1.58:1.58; d.userData.elevator=true;
    elevatorCar.add(d); elevatorDoors.push(d); elevatorMeshes.push(d);
  }
- const light=new THREE.PointLight(0xbff8ff,1.5,8);light.position.set(0,2.65,0);elevatorCar.add(light);
+ const light=new THREE.PointLight(0xbff8ff,0.65,6);light.position.set(0,2.65,0);elevatorCar.add(light);
  elevatorCar.position.set(ELEV.x,0,ELEV.z);scene.add(elevatorCar);
 
  // منصة وصول الدور الثاني — إغلاق الفتحة حول المصعد بالكامل مع إبقاء فتحة الكابينة فقط.
@@ -710,7 +700,7 @@ for (let z = -24; z <= 24; z += 12) {
   if (!(z > -6 && z < 10)) { // بعيد عن السلم
     const plant = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.8, 8),
       new THREE.MeshStandardMaterial({ color:0x2a6a45, roughness:0.8 }));
-    plant.position.set(7, 1.4, z - 2); plant.castShadow = true; scene.add(plant);
+    plant.position.set(7, 1.4, z - 2); plant.castShadow = false; scene.add(plant);
   }
 }
 
@@ -784,7 +774,7 @@ function buildShop(st){
  const floorMesh=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshStandardMaterial({color:settings.floor_color,roughness:.7}));
  floorMesh.rotation.x=-Math.PI/2;floorMesh.position.y=.04;SHOP.add(floorMesh);
  const sign=makeSign(st.name,"#"+new THREE.Color(st.color).getHexString(),95);sign.position.set(0,h-2,-d/2+.2);SHOP.add(sign);
- const lamp=new THREE.PointLight(settings.light_color,90*settings.light_intensity,Math.max(w,d)*2);lamp.position.set(0,h-1,0);SHOP.add(lamp);
+ const lamp=new THREE.PointLight(settings.light_color,3.5*settings.light_intensity,Math.min(Math.max(w,d)*1.2,18));lamp.position.set(0,h-1,0);SHOP.add(lamp);
  const door=new THREE.Mesh(new THREE.PlaneGeometry(2.8,3.3),new THREE.MeshBasicMaterial({color:settings.accent_color,transparent:true,opacity:.6,side:THREE.DoubleSide}));
  door.position.set(0,1.7,d/2-.25);door.rotation.y=Math.PI;door.userData.isExit=true;SHOP.add(door);
  for(let i=doors.length-1;i>=0;i--)if(doors[i].userData.isExit)doors.splice(i,1);doors.push(door);
