@@ -63,6 +63,14 @@ body.panel-open #mobile-stick{visibility:hidden}
 
 #elevator-panel{position:fixed;inset:0;z-index:35;display:none;align-items:center;justify-content:center;background:rgba(5,10,18,.38);backdrop-filter:blur(6px)}
 #elevator-panel.open{display:flex}#elevator-card{width:min(330px,88vw);padding:24px;border-radius:24px;background:rgba(15,27,42,.94);border:1px solid rgba(126,236,255,.55);box-shadow:0 20px 70px #0008,0 0 35px #55ddff33;text-align:center;color:white}#elevator-card h2{margin:0 0 7px;font-size:24px}#elevator-card p{margin:0 0 18px;color:#c8dce8}.elev-btn{width:100%;padding:14px;margin:7px 0;border:1px solid #8cecff66;border-radius:14px;background:linear-gradient(135deg,#16364b,#245d74);color:white;font-size:16px;font-weight:700;cursor:pointer}.elev-btn:hover{transform:translateY(-1px);box-shadow:0 7px 22px #44ddff2f}.elev-close{margin-top:10px;background:transparent;border:0;color:#aac0cb;cursor:pointer}
+
+/* Cool Modern theme */
+#hint,#zone-badge,#keys{color:#eaf5ff;background:rgba(18,31,45,.68);border-color:rgba(151,202,238,.38);box-shadow:0 8px 28px rgba(25,70,105,.14)}
+#header{background:linear-gradient(to bottom,rgba(16,28,42,.82),transparent)}
+#panel{background:rgba(18,31,45,.92);border-color:rgba(151,202,238,.48)}
+#panel .close:hover{background:#77b9e6}.btn-salla{background:linear-gradient(90deg,#9ed8ff,#6ca9d5);color:#102233}
+#toast{color:#102233;background:linear-gradient(90deg,#d9efff,#9ed2f5);box-shadow:0 5px 25px rgba(80,160,220,.28)}
+#zone-badge{color:#d9efff}
 </style>
 <div id="elevator-panel"><div id="elevator-card"><h2>🛗 المصعد الزجاجي</h2><p>اختر الطابق الذي تريد الذهاب إليه</p><button class="elev-btn" data-floor="0">الطابق الأول — الأرضي</button><button class="elev-btn" data-floor="1">الطابق الثاني — المحلات العلوية</button><button class="elev-close">إلغاء</button></div></div>
 <script type="importmap">
@@ -177,9 +185,9 @@ function makeSign(text, color, size=90, w=1024, h=200) {
 }
 
 /* ---------- إضاءة دافئة واقعية ---------- */
-scene.add(new THREE.HemisphereLight(0xfff8ed,0x66717a,1.35));
-scene.add(new THREE.AmbientLight(0xfff7ea,0.52));
-const sun = new THREE.DirectionalLight(0xfff4df,2.35);
+scene.add(new THREE.HemisphereLight(0xeaf5ff,0x657789,1.45));
+scene.add(new THREE.AmbientLight(0xdcecff,0.58));
+const sun = new THREE.DirectionalLight(0xeaf4ff,2.25);
 sun.position.set(12, 22, 10); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
@@ -207,10 +215,10 @@ const FUTURE = {
 
 /* ---------- ألوان واقعية ---------- */
 const MAT = {
-  floor:  new THREE.MeshPhysicalMaterial({ color:0xeeeae2, roughness:0.10, metalness:0.02, clearcoat:1.0, clearcoatRoughness:0.05, reflectivity:0.85 }),
-  slab:   new THREE.MeshStandardMaterial({ color:0xf5f1e9, roughness:0.22, metalness:0.03 }),
+  floor:  new THREE.MeshPhysicalMaterial({ color:0xe9eef5, roughness:0.10, metalness:0.02, clearcoat:1.0, clearcoatRoughness:0.05, reflectivity:0.85 }),
+  slab:   new THREE.MeshStandardMaterial({ color:0xeef3f8, roughness:0.22, metalness:0.03 }),
   wall:   new THREE.MeshStandardMaterial({ color:0xe9eef8, roughness:0.38, metalness:0.05, side:THREE.BackSide }),
-  ceil:   new THREE.MeshStandardMaterial({ color:0xf2ede2, roughness:0.95, side:THREE.BackSide }),
+  ceil:   new THREE.MeshStandardMaterial({ color:0xf2f6fb, roughness:0.95, side:THREE.BackSide }),
   gold:   new THREE.MeshStandardMaterial({ color:FUTURE.chrome, roughness:0.18, metalness:0.82, emissive:FUTURE.cyan, emissiveIntensity:0.06 }),
   glass:  new THREE.MeshPhysicalMaterial({ color:0xe4f7fb, roughness:0.02, metalness:0.02, transparent:true, opacity:0.22, transmission:0.72, thickness:0.12, clearcoat:1 }),
   dark:   new THREE.MeshStandardMaterial({ color:0x2a2a30, roughness:0.5, metalness:0.6 }),
@@ -222,7 +230,7 @@ const LEVEL_Y=FLOOR_Y+.2,CEILING_F0=FLOOR_Y-.2,CEILING_F1=HALL_H-1.2;
 
 /* ---------- قاعة المول الجديدة: أتريوم مفتوح ومرتفع ---------- */
 // بدل الصندوق المغلق القديم: جداران جانبيان وخلفيتان فقط، والسقف مرتفع جداً.
-const wallMat=new THREE.MeshStandardMaterial({color:0xe7e2da,roughness:.48,metalness:.01});
+const wallMat=new THREE.MeshStandardMaterial({color:0xdfe7ef,roughness:.48,metalness:.01});
 function boxMesh(w,h,d,x,y,z,mat=wallMat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.receiveShadow=true;scene.add(m);return m;}
 boxMesh(.45,HALL_H,HALL_L,-HALL_W/2,HALL_H/2,0);
 boxMesh(.45,HALL_H,HALL_L, HALL_W/2,HALL_H/2,0);
@@ -241,7 +249,7 @@ sideDeck(FLOOR_Y*2,7.4);
 
 /* ---------- ممشى زجاجي عند مخرج السلالم ---------- */
 // منصة حقيقية تصل السلم بالممرين الجانبيين، ثم يتفرع الزائر يميناً أو يساراً.
-const bridgeFloorMat=new THREE.MeshPhysicalMaterial({color:0xf1eee8,roughness:.10,metalness:.02,transparent:false,opacity:1,transmission:0,clearcoat:1});
+const bridgeFloorMat=new THREE.MeshPhysicalMaterial({color:0xe8eef5,roughness:.10,metalness:.02,transparent:false,opacity:1,transmission:0,clearcoat:1});
 const upperBridge=new THREE.Mesh(new THREE.BoxGeometry(28,.24,8.6),bridgeFloorMat);
 upperBridge.position.set(0,FLOOR_Y,-3.35);upperBridge.receiveShadow=true;scene.add(upperBridge);
 // حواف زجاجية قصيرة على جانبي الممشى مع ترك الوسط مفتوحاً للسلالم.
@@ -266,7 +274,7 @@ bridgeRail(0,-7.62,11.5,.10);
 const skyCanvas=document.createElement('canvas'); skyCanvas.width=1024; skyCanvas.height=512;
 const skyCtx=skyCanvas.getContext('2d');
 const skyGrad=skyCtx.createRadialGradient(512,250,20,512,250,480);
-skyGrad.addColorStop(0,'#bff8ff'); skyGrad.addColorStop(.42,'#8edff1'); skyGrad.addColorStop(.75,'#c9c6ef'); skyGrad.addColorStop(1,'#f7f5ff');
+skyGrad.addColorStop(0,'#eaf7ff'); skyGrad.addColorStop(.42,'#cfe9ff'); skyGrad.addColorStop(.75,'#b8d4ee'); skyGrad.addColorStop(1,'#f7fbff');
 skyCtx.fillStyle=skyGrad; skyCtx.fillRect(0,0,1024,512);
 for(let i=0;i<90;i++){const x=Math.random()*1024,y=Math.random()*512,r=Math.random()*2+.3;skyCtx.fillStyle='rgba(255,255,255,'+(Math.random()*.55+.2)+')';skyCtx.beginPath();skyCtx.arc(x,y,r,0,Math.PI*2);skyCtx.fill();}
 const skyTex=new THREE.CanvasTexture(skyCanvas); skyTex.colorSpace=THREE.SRGBColorSpace;
@@ -362,14 +370,14 @@ function addPlanter(x,y,z,s=1){
 for(const z of [-30,-18,-6,8,20,32]){addPlanter(-12.2,0,z,.78);addPlanter(12.2,0,z,.78);}
 for(const z of [-28,-14,14,28]){addPlanter(-16.2,FLOOR_Y+.2,z,.58);addPlanter(16.2,FLOOR_Y+.2,z,.58);}
 // جلسات بسيطة في قلب الأتريوم
-const seatMat=new THREE.MeshStandardMaterial({color:0xb6a795,roughness:.62});
+const seatMat=new THREE.MeshStandardMaterial({color:0x9ba9b8,roughness:.62});
 for(const [x,z,r] of [[-6,-15,0],[7,-18,Math.PI/2],[-8,17,0],[7,14,Math.PI/2]]){
  const seat=new THREE.Mesh(new THREE.BoxGeometry(3.2,.48,1.15),seatMat);seat.position.set(x,.28,z);seat.rotation.y=r;seat.castShadow=true;scene.add(seat);
 }
 
 
 /* ---------- V7: تشطيب معماري فاخر أقرب للرندر الواقعي ---------- */
-const V7={stone:0xf1eee9,stone2:0xe5dfd7,dark:0x202428,brass:0xb79b6a,warm:0xffdfb0};
+const V7={stone:0xeaf0f6,stone2:0xd9e3ed,dark:0x182330,brass:0x8fa7bb,warm:0xcfeaff};
 const stoneMat=new THREE.MeshPhysicalMaterial({color:V7.stone,roughness:.22,metalness:.03,clearcoat:.55,clearcoatRoughness:.18});
 const darkMat=new THREE.MeshStandardMaterial({color:V7.dark,roughness:.28,metalness:.35});
 const brassMat=new THREE.MeshStandardMaterial({color:V7.brass,roughness:.2,metalness:.82});
@@ -398,7 +406,7 @@ function luxuryRail(x,y,z,w,d){
 // حواجز طويلة على جانبي الأتريوم، مع ترك منطقة السلالم/المصعد مفتوحة وظيفياً
 for(const z of [-28,-17,17,28]){luxuryRail(-8.6,FLOOR_Y+.18,z,10,.09);luxuryRail(8.6,FLOOR_Y+.18,z,10,.09);}
 // جلسات أنعم مع طاولات ونباتات في الدور الأرضي
-const sofaMat=new THREE.MeshStandardMaterial({color:0xc8bbaa,roughness:.7});
+const sofaMat=new THREE.MeshStandardMaterial({color:0xaebbc8,roughness:.7});
 for(const [x,z,rot] of [[-7,-24,0],[7,-24,0],[-7,24,0],[7,24,0]]){
  const sofa=new THREE.Mesh(new THREE.BoxGeometry(3.4,.48,1.2),sofaMat);sofa.position.set(x,.28,z);sofa.rotation.y=rot;sofa.castShadow=true;scene.add(sofa);
  const back=new THREE.Mesh(new THREE.BoxGeometry(3.4,.72,.22),sofaMat);back.position.set(x,.72,z+.5);scene.add(back);
@@ -406,8 +414,8 @@ for(const [x,z,rot] of [[-7,-24,0],[7,-24,0],[-7,24,0],[7,24,0]]){
 }
 // مصابيح سقف نقطية موزعة لتعطي عمقاً بدلاً من الإضاءة المسطحة
 for(let z=-38;z<=38;z+=5.5) for(const x of [-18,-12,12,18]){
- const spotDisc=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.035,16),new THREE.MeshBasicMaterial({color:0xfff4df}));spotDisc.rotation.x=Math.PI/2;spotDisc.position.set(x,HALL_H-1.08,z);scene.add(spotDisc);
- const pl=new THREE.PointLight(0xffe7c4,.28,7);pl.position.set(x,HALL_H-1.3,z);scene.add(pl);
+ const spotDisc=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.035,16),new THREE.MeshBasicMaterial({color:0xe8f4ff}));spotDisc.rotation.x=Math.PI/2;spotDisc.position.set(x,HALL_H-1.08,z);scene.add(spotDisc);
+ const pl=new THREE.PointLight(0xcfe8ff,.30,7);pl.position.set(x,HALL_H-1.3,z);scene.add(pl);
 }
 // حلقة سقف بيضاوية إضافية دافئة حول القبة السماوية
 for(const scale of [1,1.13]){
@@ -586,13 +594,13 @@ function buildStorefront(st, y) {
 
 
   // عمق حقيقي للمتجر + إضاءة عرض داخلية
-  const interiorMat=new THREE.MeshStandardMaterial({color:0xf3eadb,roughness:.5,emissive:0xffd7a0,emissiveIntensity:.12});
+  const interiorMat=new THREE.MeshStandardMaterial({color:0xeaf2f8,roughness:.5,emissive:0xbfdfff,emissiveIntensity:.12});
   const interior=new THREE.Mesh(new THREE.BoxGeometry(.18,3.55,5.75),interiorMat);
   interior.position.set(st.side*(HALL_W/2-.92),y+1.82,st.z);scene.add(interior);
   const blackHeader=new THREE.Mesh(new THREE.BoxGeometry(.16,.78,6.45),new THREE.MeshStandardMaterial({color:0x17191b,roughness:.32,metalness:.28}));
   blackHeader.position.set(st.side*(HALL_W/2-.73),y+3.72,st.z);scene.add(blackHeader);
   // رفوف ومنتجات مبسطة مرئية من الممر
-  const shelfMat=new THREE.MeshStandardMaterial({color:0xd6c5ae,roughness:.55});
+  const shelfMat=new THREE.MeshStandardMaterial({color:0xb9c7d3,roughness:.55});
   for(const dz of [-1.75,0,1.75]){
     const shelf=new THREE.Mesh(new THREE.BoxGeometry(.22,.08,1.25),shelfMat);shelf.position.set(st.side*(HALL_W/2-1.02),y+1.45,st.z+dz);scene.add(shelf);
     for(let k=0;k<3;k++){
@@ -697,7 +705,7 @@ ADS.filter(ad=>ad.enabled).forEach((ad,i)=>adScreen(ad,i,ad.x,ad.floor*LEVEL_Y+a
 /* مقاعد ونباتات */
 for (let z = -24; z <= 24; z += 12) {
   const bench = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.5, 0.9),
-    new THREE.MeshStandardMaterial({ color:0x6a5a3a, roughness:0.6 }));
+    new THREE.MeshStandardMaterial({ color:0x596b7b, roughness:0.6 }));
   bench.position.set(-7, 0.35, z + 6); bench.castShadow = true; scene.add(bench);
   if (!(z > -6 && z < 10)) { // بعيد عن السلم
     const plant = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.8, 8),
@@ -739,7 +747,7 @@ function buildShelf(s){
  const back=new THREE.Mesh(new THREE.BoxGeometry(5,6.2,.15),mat);back.position.y=3.1;group.add(back);
  for(let row=0;row<3;row++){
   const shelf=new THREE.Mesh(new THREE.BoxGeometry(5,.1,1.1),mat.clone());shelf.position.set(0,.9+row*1.6,.5);group.add(shelf);
-  const led=new THREE.Mesh(new THREE.BoxGeometry(4.85,.025,.025),new THREE.MeshBasicMaterial({color:0xffedd0}));led.position.set(0,.95+row*1.6,1.05);group.add(led);
+  const led=new THREE.Mesh(new THREE.BoxGeometry(4.85,.025,.025),new THREE.MeshBasicMaterial({color:0xd8efff}));led.position.set(0,.95+row*1.6,1.05);group.add(led);
  }
  const title=makeSign(s.name,'#fff',70);title.scale.set(.4,.4,.4);title.position.set(0,6.7,.3);group.add(title);
  SHOP.add(group);shopUnits.push(group);renderShelf(group);
