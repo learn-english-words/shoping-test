@@ -453,10 +453,17 @@ let elevatorCar=null, elevatorDoors=[], elevatorRide=null, elevatorFloor=0;
  const light=new THREE.PointLight(0xbff8ff,1.5,8);light.position.set(0,2.65,0);elevatorCar.add(light);
  elevatorCar.position.set(ELEV.x,0,ELEV.z);scene.add(elevatorCar);
 
- // منصة وصول الدور الثاني
- const landing=new THREE.Mesh(new THREE.BoxGeometry(28,.24,4.6),bridgeFloorMat);landing.position.set(0,FLOOR_Y,ELEV.z);landing.receiveShadow=true;scene.add(landing);
- bridgeRail(-8,ELEV.z-2.25,12,.10);bridgeRail(8,ELEV.z-2.25,12,.10);
- bridgeRail(-8,ELEV.z+2.25,12,.10);bridgeRail(8,ELEV.z+2.25,12,.10);
+ // منصة وصول الدور الثاني — إغلاق الفتحة حول المصعد بالكامل مع إبقاء فتحة الكابينة فقط.
+ // الممر الأمامي والخلفي عريضان، لذلك عند الخروج من المصعد لا توجد أي حفرة يمكن السقوط منها.
+ const landingFront=new THREE.Mesh(new THREE.BoxGeometry(28,.24,5.2),bridgeFloorMat);landingFront.position.set(0,FLOOR_Y,ELEV.z-3.55);landingFront.receiveShadow=true;scene.add(landingFront);
+ const landingBack=new THREE.Mesh(new THREE.BoxGeometry(28,.24,3.2),bridgeFloorMat);landingBack.position.set(0,FLOOR_Y,ELEV.z+2.55);landingBack.receiveShadow=true;scene.add(landingBack);
+ // قطعتان على جانبي بئر المصعد تغلقان الفراغ المتبقي بدون تغطية الكابينة نفسها.
+ for(const sx of [-1,1]){
+   const sideLanding=new THREE.Mesh(new THREE.BoxGeometry(12.25,.24,2.15),bridgeFloorMat);
+   sideLanding.position.set(sx*7.85,FLOOR_Y,ELEV.z);sideLanding.receiveShadow=true;scene.add(sideLanding);
+ }
+ bridgeRail(-8,ELEV.z-6.10,12,.10);bridgeRail(8,ELEV.z-6.10,12,.10);
+ bridgeRail(-8,ELEV.z+4.10,12,.10);bridgeRail(8,ELEV.z+4.10,12,.10);
 })();
 function setElevatorDoors(open,instant=false){
  elevatorDoors.forEach(d=>{d.userData.targetX=open?d.userData.openX:d.userData.closedX;if(instant)d.position.x=d.userData.targetX;});
@@ -825,7 +832,9 @@ function useElevator(targetFloor){
  camera.position.set(ELEV.x,LEVEL_Y*elevatorFloor+EYE,ELEV.z-.10);
  yaw=Math.PI;pitch=0;
  setElevatorDoors(false);
- elevatorRide={from:elevatorFloor,to:targetFloor,t:0,wait:.85,duration:4.2};
+ // passengerY يحفظ موضع اللاعب داخل الكابينة. من الآن لا يوجد Teleport عند الوصول؛
+ // اللاعب يُحمل مع الكابينة بنفس مقدار حركتها في كل Frame.
+ elevatorRide={from:elevatorFloor,to:targetFloor,t:0,wait:.85,duration:4.2,lastCarY:LEVEL_Y*elevatorFloor,passengerY:EYE};
  showToast('🚪 الأبواب تُغلق...');
 }
 elevatorPanel.querySelectorAll('[data-floor]').forEach(b=>b.onclick=()=>useElevator(Number(b.dataset.floor)));
@@ -1039,12 +1048,19 @@ function animate() {
       const k=Math.min(1,elevatorRide.t), ease=k*k*(3-2*k);
       const y0=LEVEL_Y*elevatorRide.from, y1=LEVEL_Y*elevatorRide.to;
       const y=y0+(y1-y0)*ease;
+      const dy=y-elevatorRide.lastCarY;
       elevatorCar.position.y=y;
-      camera.position.set(ELEV.x,y+EYE,ELEV.z-.10);
+      // حمل اللاعب فعلياً فوق أرضية المصعد: نفس delta-Y للكابينة يضاف للاعب كل إطار.
+      // نثبت X/Z داخل الكابينة أثناء الرحلة فقط، ولا ننقله فجأة عند الوصول.
+      camera.position.x=ELEV.x;
+      camera.position.z=ELEV.z-.10;
+      camera.position.y += dy;
+      elevatorRide.lastCarY=y;
       if(k>=1){
-        elevatorFloor=elevatorRide.to; floor=elevatorRide.to; elevatorRide=null;
+        const arrived=elevatorRide.to;
+        elevatorFloor=arrived; floor=arrived; elevatorRide=null;
         setElevatorDoors(true); updateBadge();
-        camera.position.set(ELEV.x,LEVEL_Y*floor+EYE,ELEV.z-1.45);
+        // لا يوجد camera.position.set هنا: اللاعب بقي فوق الكابينة طوال الرحلة.
         showToast(floor===0?'🛗 وصلنا إلى الطابق الأول — الأبواب مفتوحة':'🛗 وصلنا إلى الطابق الثاني — الأبواب مفتوحة');
       }
     }
