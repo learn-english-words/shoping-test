@@ -154,8 +154,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.18;
-renderer.toneMappingExposure = 1.18;
+renderer.toneMappingExposure = 0.82;
 document.getElementById('app').appendChild(renderer.domElement);
 
 /* ---------- أدوات نصوص ---------- */
@@ -174,8 +173,9 @@ function makeSign(text, color, size=90, w=1024, h=200) {
 }
 
 /* ---------- إضاءة دافئة واقعية ---------- */
-scene.add(new THREE.AmbientLight(settings.light_color,settings.light_intensity));
-const sun = new THREE.DirectionalLight(settings.light_color,1.2);
+scene.add(new THREE.HemisphereLight(0xdff8ff,0x4d5366,1.05));
+scene.add(new THREE.AmbientLight(0xffffff,0.38));
+const sun = new THREE.DirectionalLight(0xffffff,2.0);
 sun.position.set(12, 22, 10); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -40; sun.shadow.camera.right = 40;
@@ -183,15 +183,15 @@ sun.shadow.camera.top = 40; sun.shadow.camera.bottom = -40;
 scene.add(sun);
 // كرات إضاءة دافئة على طول الممرات
 [[-9,4.6,0,0],[9,4.6,0,0],[-9,9.6,0,1],[9,9.6,0,1]].forEach(([x,y,z,f])=>{
-  const pl = new THREE.PointLight(0xffe6c0, 45, 32);
+  const pl = new THREE.PointLight(0xbfefff, 4.5, 26);
   pl.position.set(x, y, z + (f? 0 : 0)); scene.add(pl);
 });
-const warmA = new THREE.PointLight(0xffe0b3, 40, 30); warmA.position.set(-9, 4.6, 0); scene.add(warmA);
-const warmB = new THREE.PointLight(0xffe0b3, 40, 30); warmB.position.set(9, 4.6, 0); scene.add(warmB);
-const warmC = new THREE.PointLight(0xffe0b3, 40, 30); warmC.position.set(-9, 9.6, 0); scene.add(warmC);
-const warmD = new THREE.PointLight(0xffe0b3, 40, 30); warmD.position.set(9, 9.6, 0); scene.add(warmD);
-const warmE = new THREE.PointLight(0xffe0b3, 35, 25); warmE.position.set(0, 9, 25); scene.add(warmE);
-const warmF = new THREE.PointLight(0xffe0b3, 35, 25); warmF.position.set(0, 9, -25); scene.add(warmF);
+const warmA = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmA.position.set(-9, 4.6, 0); scene.add(warmA);
+const warmB = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmB.position.set(9, 4.6, 0); scene.add(warmB);
+const warmC = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmC.position.set(-9, 9.6, 0); scene.add(warmC);
+const warmD = new THREE.PointLight(0xd8e8ff, 3.0, 24); warmD.position.set(9, 9.6, 0); scene.add(warmD);
+const warmE = new THREE.PointLight(0xd8e8ff, 2.5, 22); warmE.position.set(0, 9, 25); scene.add(warmE);
+const warmF = new THREE.PointLight(0xd8e8ff, 2.5, 22); warmF.position.set(0, 9, -25); scene.add(warmF);
 
 /* ---------- هوية المول المستقبلية ---------- */
 const FUTURE = {
@@ -203,7 +203,7 @@ const FUTURE = {
 
 /* ---------- ألوان واقعية ---------- */
 const MAT = {
-  floor:  new THREE.MeshPhysicalMaterial({ color:0xeaf4f7, roughness:0.12, metalness:0.05, clearcoat:0.7, clearcoatRoughness:0.12 }),
+  floor:  new THREE.MeshPhysicalMaterial({ color:0xcfd5df, roughness:0.18, metalness:0.05, clearcoat:0.7, clearcoatRoughness:0.12 }),
   slab:   new THREE.MeshStandardMaterial({ color:0xe8eef5, roughness:0.24, metalness:0.08 }),
   wall:   new THREE.MeshStandardMaterial({ color:0xe9eef8, roughness:0.38, metalness:0.05, side:THREE.BackSide }),
   ceil:   new THREE.MeshStandardMaterial({ color:0xf2ede2, roughness:0.95, side:THREE.BackSide }),
@@ -213,26 +213,27 @@ const MAT = {
   escal:  new THREE.MeshStandardMaterial({ color:0x9aa0a8, roughness:0.35, metalness:0.85 }),
 };
 
-const HALL_W=34,HALL_L=78,FLOOR_Y=5,HALL_H=16;
-const LEVEL_Y=FLOOR_Y+.2,CEILING_F0=FLOOR_Y-.2,CEILING_F1=FLOOR_Y+4.45;
+const HALL_W=46,HALL_L=92,FLOOR_Y=6.2,HALL_H=22;
+const LEVEL_Y=FLOOR_Y+.2,CEILING_F0=FLOOR_Y-.2,CEILING_F1=HALL_H-1.2;
 
-/* ---------- قاعة المول (الجدران والسقف) ---------- */
-const hall = new THREE.Mesh(new THREE.BoxGeometry(HALL_W, HALL_H, HALL_L), MAT.wall);
-hall.position.y = HALL_H/2;
-scene.add(hall);
+/* ---------- قاعة المول الجديدة: أتريوم مفتوح ومرتفع ---------- */
+// بدل الصندوق المغلق القديم: جداران جانبيان وخلفيتان فقط، والسقف مرتفع جداً.
+const wallMat=new THREE.MeshStandardMaterial({color:0xd9dce5,roughness:.55,metalness:.02});
+function boxMesh(w,h,d,x,y,z,mat=wallMat){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.receiveShadow=true;scene.add(m);return m;}
+boxMesh(.45,HALL_H,HALL_L,-HALL_W/2,HALL_H/2,0);
+boxMesh(.45,HALL_H,HALL_L, HALL_W/2,HALL_H/2,0);
+boxMesh(HALL_W,HALL_H,.45,0,HALL_H/2,-HALL_L/2);
+boxMesh(HALL_W,HALL_H,.45,0,HALL_H/2, HALL_L/2);
 
-/* بلاطة الطابق الأول مع فتحة الـ Atrium (x: -3..3, z: -2..8) */
-function slab(w, d, x, z) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, d), MAT.slab);
-  m.position.set(x, FLOOR_Y, z);
-  m.receiveShadow = true; m.castShadow = true;
-  scene.add(m);
+// ممرا الطابقين العلويين على الأطراف فقط، ليبقى قلب المول مفتوحاً من الأرض إلى السقف.
+function sideDeck(y,depth=8.2){
+ for(const side of [-1,1]){
+   const deck=new THREE.Mesh(new THREE.BoxGeometry(depth,.34,HALL_L-3),MAT.slab);
+   deck.position.set(side*(HALL_W/2-depth/2),y,0); deck.castShadow=true;deck.receiveShadow=true;scene.add(deck);
+ }
 }
-slab(HALL_W, HALL_L/2 - 8, 0,  (8 + HALL_L/2)/2);      // أمام الفتحة
-slab(HALL_W, HALL_L/2 - 2, 0, -(2 + HALL_L/2)/2);      // خلف الفتحة
-slab(HALL_W/2 - 3, 10, -(HALL_W/2 + 3)/2, 3);          // يسار الفتحة
-slab(HALL_W/2 - 3, 10,  (HALL_W/2 + 3)/2, 3);          // يمين الفتحة
-
+sideDeck(FLOOR_Y,9.0);
+sideDeck(FLOOR_Y*2,7.4);
 /* سقف سماوي بيضاوي مضيء مستوحى من المرجع */
 const skyCanvas=document.createElement('canvas'); skyCanvas.width=1024; skyCanvas.height=512;
 const skyCtx=skyCanvas.getContext('2d');
@@ -241,12 +242,12 @@ skyGrad.addColorStop(0,'#bff8ff'); skyGrad.addColorStop(.42,'#8edff1'); skyGrad.
 skyCtx.fillStyle=skyGrad; skyCtx.fillRect(0,0,1024,512);
 for(let i=0;i<90;i++){const x=Math.random()*1024,y=Math.random()*512,r=Math.random()*2+.3;skyCtx.fillStyle='rgba(255,255,255,'+(Math.random()*.55+.2)+')';skyCtx.beginPath();skyCtx.arc(x,y,r,0,Math.PI*2);skyCtx.fill();}
 const skyTex=new THREE.CanvasTexture(skyCanvas); skyTex.colorSpace=THREE.SRGBColorSpace;
-const skyDome=new THREE.Mesh(new THREE.CircleGeometry(10.2,64),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.DoubleSide}));
-skyDome.rotation.x=Math.PI/2; skyDome.scale.set(1.35,2.45,1); skyDome.position.set(0,HALL_H-.10,0); scene.add(skyDome);
+const skyDome=new THREE.Mesh(new THREE.CircleGeometry(15.5,96),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.DoubleSide}));
+skyDome.rotation.x=Math.PI/2; skyDome.scale.set(1.0,2.15,1); skyDome.position.set(0,HALL_H-.10,0); scene.add(skyDome);
 // حلقات ضوئية متدرجة حول فتحة السقف
 for(let i=0;i<5;i++){
- const ring=new THREE.Mesh(new THREE.TorusGeometry(9.2+i*.68,.07,10,96),new THREE.MeshBasicMaterial({color:i%2?FUTURE.violet:FUTURE.cyan,transparent:true,opacity:.62}));
- ring.rotation.x=Math.PI/2; ring.scale.z=1.88; ring.position.y=HALL_H-.18-i*.07; scene.add(ring);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(14.0+i*.75,.09,12,128),new THREE.MeshBasicMaterial({color:i%2?FUTURE.violet:FUTURE.cyan,transparent:true,opacity:.62}));
+ ring.rotation.x=Math.PI/2; ring.scale.z=1.72; ring.position.y=HALL_H-.18-i*.07; scene.add(ring);
 }
 
 /* شرائط LED معمارية بطول المول */
@@ -261,18 +262,14 @@ const upperDeckMat = new THREE.MeshStandardMaterial({color:0xf5f8fc,roughness:.1
 const glowMatC = new THREE.MeshBasicMaterial({color:FUTURE.cyan,transparent:true,opacity:.72});
 const glowMatV = new THREE.MeshBasicMaterial({color:FUTURE.violet,transparent:true,opacity:.58});
 
-// شرفات جانبية طويلة تعطي إحساس المول متعدد الأدوار من الصورة المرجعية.
-for(const y of [5.05,10.05]){
-  for(const side of [-1,1]){
-    const deck=new THREE.Mesh(new THREE.BoxGeometry(6.3,.34,HALL_L-4),upperDeckMat);
-    deck.position.set(side*(HALL_W/2-3.15),y,0); deck.castShadow=true; deck.receiveShadow=true; scene.add(deck);
-    const glass=new THREE.Mesh(new THREE.BoxGeometry(.10,1.08,HALL_L-5),MAT.glass);
-    glass.position.set(side*(HALL_W/2-6.28),y+.78,0); scene.add(glass);
-    const cap=new THREE.Mesh(new THREE.BoxGeometry(.16,.09,HALL_L-5),MAT.gold);
-    cap.position.set(side*(HALL_W/2-6.28),y+1.34,0); scene.add(cap);
-    const glow=new THREE.Mesh(new THREE.BoxGeometry(.08,.055,HALL_L-5),y>7?glowMatV:glowMatC);
-    glow.position.set(side*(HALL_W/2-6.20),y+.13,0); scene.add(glow);
-  }
+// حواف زجاجية مضيئة للطابقين حول الأتريوم الكبير.
+for(const [y,depth] of [[FLOOR_Y,9.0],[FLOOR_Y*2,7.4]]){
+ for(const side of [-1,1]){
+  const innerX=side*(HALL_W/2-depth);
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(.11,1.18,HALL_L-5),MAT.glass); glass.position.set(innerX,y+.82,0);scene.add(glass);
+  const cap=new THREE.Mesh(new THREE.BoxGeometry(.18,.10,HALL_L-5),MAT.gold);cap.position.set(innerX,y+1.43,0);scene.add(cap);
+  const glow=new THREE.Mesh(new THREE.BoxGeometry(.10,.06,HALL_L-5),y>8?glowMatV:glowMatC);glow.position.set(innerX,y+.16,0);scene.add(glow);
+ }
 }
 
 // واجهات مضيئة للطابق الثالث (ديكورية حالياً، للمشهد البصري فقط).
@@ -295,7 +292,7 @@ for(const side of [-1,1]) for(let z=-34;z<=34;z+=12){
 
 // خطوط أرضية مضيئة تقود النظر إلى قلب المول.
 for(const x of [-6,-3,0,3,6]){
- const strip=new THREE.Mesh(new THREE.PlaneGeometry(.045,HALL_L-8),new THREE.MeshBasicMaterial({color:x===0?FUTURE.violet:FUTURE.cyan,transparent:true,opacity:x===0?.28:.18,depthWrite:false}));
+ const strip=new THREE.Mesh(new THREE.PlaneGeometry(.045,HALL_L-8),new THREE.MeshBasicMaterial({color:x===0?FUTURE.violet:FUTURE.cyan,transparent:true,opacity:x===0?.18:.10,depthWrite:false}));
  strip.rotation.x=-Math.PI/2; strip.position.set(x,.025,0); scene.add(strip);
 }
 
@@ -311,33 +308,13 @@ gfloor.rotation.x = -Math.PI/2; gfloor.position.y = 0.01;
 gfloor.receiveShadow = true;
 scene.add(gfloor);
 
-/* سقف الطابق الأول (أرضية بلا فتحات بصرية — نخلي الفتحة مفتوحة للـ atrium) */
-/* بلاطة السقف: نفس تقسيم الفتحة */
-function ceilSlab(w, d, x, z) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.3, d), new THREE.MeshStandardMaterial({color:0xf2ede2,roughness:.95}));
-  m.position.set(x, FLOOR_Y + 4.6, z);
-  scene.add(m);
+/* ---------- إضاءة سقفية مرتفعة فقط ---------- */
+for(let z=-36;z<=36;z+=12){
+ for(const x of [-14,14]){
+  const panel=new THREE.Mesh(new THREE.BoxGeometry(5.5,.10,1.0),new THREE.MeshBasicMaterial({color:0xf4fbff}));
+  panel.position.set(x,HALL_H-1.15,z);scene.add(panel);
+ }
 }
-ceilSlab(HALL_W, HALL_L/2 - 8, 0,  (8 + HALL_L/2)/2);
-ceilSlab(HALL_W, HALL_L/2 - 2, 0, -(2 + HALL_L/2)/2);
-ceilSlab(HALL_W/2 - 3, 10, -(HALL_W/2 + 3)/2, 3);
-ceilSlab(HALL_W/2 - 3, 10,  (HALL_W/2 + 3)/2, 3);
-
-/* إضاءات سقف مدمجة (مظلات مضيئة) */
-function ceilingLights(y) {
-  for (let z = -30; z <= 30; z += 8) {
-    for (const x of [-7, 0, 7]) {
-      // تخطّ منطقة الفتحة للطابق الأول
-      if(Math.abs(x)<3.2&&z>-5&&z<12)continue;
-      const panel = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 1.4),
-        new THREE.MeshBasicMaterial({ color:0xfff6e6 }));
-      panel.position.set(x,y===0?CEILING_F0-.15:CEILING_F1-.10,z);
-      scene.add(panel);
-    }
-  }
-}
-ceilingLights(0);
-ceilingLights(FLOOR_Y);
 
 /* ---------- درابزين زجاجي حول الفتحة (طابق أول) ---------- */
 function railing(w, d, x, z) {
