@@ -414,7 +414,7 @@ for(const scale of [1,1.13]){
  const ring=new THREE.Mesh(new THREE.TorusGeometry(11.5*scale,.075,12,128),warmGlow);ring.scale.z=.58;ring.rotation.x=Math.PI/2;ring.position.set(0,HALL_H-.82,0);scene.add(ring);
 }
 // مداخل محلات ببوابات سوداء/نحاسية أكثر واقعية أمام الواجهات الحالية
-for(const st of storefronts){
+for(const st of mallStoreRows.filter(s=>s.enabled)){
  const y=st.floor===1?LEVEL_Y:0, side=st.side, x=side*(HALL_W/2-.76);
  const head=new THREE.Mesh(new THREE.BoxGeometry(.22,.72,6.8),darkMat);head.position.set(x,y+3.78,st.z);scene.add(head);
  for(const dz of [-3.28,3.28]){const jamb=new THREE.Mesh(new THREE.BoxGeometry(.22,3.55,.18),brassMat);jamb.position.set(x,y+1.9,st.z+dz);scene.add(jamb);}
