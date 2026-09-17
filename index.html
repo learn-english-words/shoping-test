@@ -245,8 +245,11 @@ const bridgeFloorMat=new THREE.MeshPhysicalMaterial({color:0xdff7ff,roughness:.0
 const upperBridge=new THREE.Mesh(new THREE.BoxGeometry(28,.24,5.6),bridgeFloorMat);
 upperBridge.position.set(0,FLOOR_Y,-3.0);upperBridge.receiveShadow=true;scene.add(upperBridge);
 // حواف زجاجية قصيرة على جانبي الممشى مع ترك الوسط مفتوحاً للسلالم.
+const mallGlassColliders=[];
 function bridgeRail(x,z,w,d){
  const glass=new THREE.Mesh(new THREE.BoxGeometry(w,1.05,d),MAT.glass);glass.position.set(x,FLOOR_Y+.72,z);scene.add(glass);
+ // حاجز تصادم مطابق للقزاز: اللاعب لا يستطيع المرور من خلاله
+ mallGlassColliders.push({x,z,hw:w/2,hd:d/2,floor:1});
  const cap=new THREE.Mesh(new THREE.BoxGeometry(w+.05,.08,d+.05),MAT.gold);cap.position.set(x,FLOOR_Y+1.27,z);scene.add(cap);
 }
 // جهة دخول السلالم: نحافظ على الحماية حول الفتحة.
@@ -416,33 +419,49 @@ function arrow(x,z,y,color,text,up=true){
 arrow(ESC.xUp,10.8,0,'#00b36b','صعود',true);
 arrow(ESC.xDown,-4.0,LEVEL_Y,'#cc3333','نزول',false);
 
-/* ---------- مصعد زجاجي تفاعلي ---------- */
+/* ---------- مصعد زجاجي متحرك فعليًا ---------- */
 const elevatorMeshes=[];
 const ELEV={x:0,z:25.5};
+let elevatorCar=null, elevatorDoors=[], elevatorRide=null, elevatorFloor=0;
 (function buildGlassElevator(){
- const g=new THREE.Group();
- const glassMat=new THREE.MeshPhysicalMaterial({color:0xaeefff,transparent:true,opacity:.26,roughness:.03,metalness:.08,transmission:.42,thickness:.12,side:THREE.DoubleSide});
- const frameMat=new THREE.MeshStandardMaterial({color:0x7b8c98,metalness:.9,roughness:.16,emissive:FUTURE.cyan,emissiveIntensity:.08});
- // قاعدة وكابينة زجاجية طويلة مرئية من الطابقين
- const base=new THREE.Mesh(new THREE.CylinderGeometry(2.05,2.05,.18,48),MAT.slab);base.position.y=.09;g.add(base);
- const back=new THREE.Mesh(new THREE.BoxGeometry(3.8,13.0,.10),glassMat);back.position.set(0,6.5,.95);g.add(back);
- for(const x of [-1.9,1.9]){const side=new THREE.Mesh(new THREE.BoxGeometry(.10,13,2.0),glassMat);side.position.set(x,6.5,0);g.add(side);}
- for(const x of [-1.92,1.92])for(const z of [-1.0,1.0]){const f=new THREE.Mesh(new THREE.BoxGeometry(.10,13.2,.10),frameMat);f.position.set(x,6.6,z);g.add(f);}
- // أبواب زجاجية في الأرضي والطابق الثاني
+ const shaft=new THREE.Group();
+ const glassMat=new THREE.MeshPhysicalMaterial({color:0xaeefff,transparent:true,opacity:.20,roughness:.03,metalness:.08,transmission:.55,thickness:.12,side:THREE.DoubleSide});
+ const frameMat=new THREE.MeshStandardMaterial({color:0x607887,metalness:.9,roughness:.16,emissive:FUTURE.cyan,emissiveIntensity:.08});
+ const back=new THREE.Mesh(new THREE.BoxGeometry(3.8,13.0,.10),glassMat);back.position.set(0,6.5,.95);shaft.add(back);
+ for(const x of [-1.9,1.9]){const side=new THREE.Mesh(new THREE.BoxGeometry(.10,13,2.0),glassMat);side.position.set(x,6.5,0);shaft.add(side);}
+ for(const x of [-1.92,1.92])for(const z of [-1.0,1.0]){const f=new THREE.Mesh(new THREE.BoxGeometry(.10,13.2,.10),frameMat);f.position.set(x,6.6,z);shaft.add(f);}
+ const roof=new THREE.Mesh(new THREE.CylinderGeometry(2.08,2.08,.16,48),new THREE.MeshBasicMaterial({color:0xcffaff}));roof.position.y=13.05;shaft.add(roof);
  for(const y of [0,FLOOR_Y]){
-   for(const x of [-.95,.95]){const door=new THREE.Mesh(new THREE.BoxGeometry(1.82,2.8,.08),glassMat);door.position.set(x,y+1.4,-1.02);door.userData.elevator=true;g.add(door);elevatorMeshes.push(door);}
-   const sign=makeSign('🛗  المصعد');sign.scale.set(.48,.48,.48);sign.position.set(0,y+3.55,-1.08);g.add(sign);
-   const call=new THREE.Mesh(new THREE.BoxGeometry(.32,.55,.12),new THREE.MeshBasicMaterial({color:FUTURE.cyan}));call.position.set(2.15,y+1.45,-1.06);call.userData.elevator=true;g.add(call);elevatorMeshes.push(call);
+   const sign=makeSign('🛗  المصعد');sign.scale.set(.48,.48,.48);sign.position.set(0,y+3.55,-1.10);shaft.add(sign);
+   const call=new THREE.Mesh(new THREE.BoxGeometry(.32,.55,.12),new THREE.MeshBasicMaterial({color:FUTURE.cyan}));call.position.set(2.15,y+1.45,-1.08);call.userData.elevator=true;shaft.add(call);elevatorMeshes.push(call);
  }
- // سقف مضيء
- const roof=new THREE.Mesh(new THREE.CylinderGeometry(2.08,2.08,.16,48),new THREE.MeshBasicMaterial({color:0xcffaff}));roof.position.y=13.05;g.add(roof);
- g.position.set(ELEV.x,0,ELEV.z);scene.add(g);
- // منصة وصول من المصعد إلى ممري الطابق الثاني
+ shaft.position.set(ELEV.x,0,ELEV.z);scene.add(shaft);
+
+ // الكابينة نفسها: هذه المجموعة تتحرك بين الطابقين
+ elevatorCar=new THREE.Group();
+ const carFloor=new THREE.Mesh(new THREE.BoxGeometry(3.45,.18,1.85),new THREE.MeshStandardMaterial({color:0xdde9ee,metalness:.45,roughness:.18}));carFloor.position.y=.09;elevatorCar.add(carFloor);
+ const carRoof=new THREE.Mesh(new THREE.BoxGeometry(3.45,.16,1.85),new THREE.MeshBasicMaterial({color:0xd8fbff}));carRoof.position.y=3.05;elevatorCar.add(carRoof);
+ const carBack=new THREE.Mesh(new THREE.BoxGeometry(3.45,2.9,.08),glassMat);carBack.position.set(0,1.5,.90);elevatorCar.add(carBack);
+ for(const x of [-1.70,1.70]){const side=new THREE.Mesh(new THREE.BoxGeometry(.08,2.9,1.8),glassMat);side.position.set(x,1.5,0);elevatorCar.add(side);}
+ for(const x of [-1.72,1.72])for(const z of [-.92,.92]){const f=new THREE.Mesh(new THREE.BoxGeometry(.08,3.0,.08),frameMat);f.position.set(x,1.5,z);elevatorCar.add(f);}
+ // بابان منزلقان في واجهة الكابينة
+ for(const x of [-.84,.84]){
+   const d=new THREE.Mesh(new THREE.BoxGeometry(1.62,2.75,.07),glassMat.clone());
+   d.position.set(x,1.42,-.94); d.userData.closedX=x; d.userData.openX=x<0?-1.58:1.58; d.userData.elevator=true;
+   elevatorCar.add(d); elevatorDoors.push(d); elevatorMeshes.push(d);
+ }
+ const light=new THREE.PointLight(0xbff8ff,1.5,8);light.position.set(0,2.65,0);elevatorCar.add(light);
+ elevatorCar.position.set(ELEV.x,0,ELEV.z);scene.add(elevatorCar);
+
+ // منصة وصول الدور الثاني
  const landing=new THREE.Mesh(new THREE.BoxGeometry(28,.24,4.6),bridgeFloorMat);landing.position.set(0,FLOOR_Y,ELEV.z);landing.receiveShadow=true;scene.add(landing);
  bridgeRail(-8,ELEV.z-2.25,12,.10);bridgeRail(8,ELEV.z-2.25,12,.10);
  bridgeRail(-8,ELEV.z+2.25,12,.10);bridgeRail(8,ELEV.z+2.25,12,.10);
 })();
-
+function setElevatorDoors(open,instant=false){
+ elevatorDoors.forEach(d=>{d.userData.targetX=open?d.userData.openX:d.userData.closedX;if(instant)d.position.x=d.userData.targetX;});
+}
+setElevatorDoors(false,true);
 /* ---------- واجهات المحلات ---------- */
 const doors = [];
 const neonPulses = [];
@@ -786,13 +805,28 @@ renderer.domElement.addEventListener('pointerup',e=>{
 });
 
 const elevatorPanel=document.getElementById('elevator-panel');
-function openElevator(){clearMovement();elevatorPanel.classList.add('open');}
-function closeElevator(){elevatorPanel.classList.remove('open');}
+function openElevator(){
+ if(elevatorRide)return;
+ clearMovement();
+ // استدعاء الكابينة إلى طابق اللاعب ثم فتح الأبواب
+ elevatorFloor=floor;
+ elevatorCar.position.y=LEVEL_Y*floor;
+ setElevatorDoors(true);
+ elevatorPanel.classList.add('open');
+ showToast('🛗 وصلت الكابينة — اختر الطابق');
+}
+function closeElevator(){if(!elevatorRide)elevatorPanel.classList.remove('open');}
 function useElevator(targetFloor){
- if(zone!=='mall'){closeElevator();return;}
- floor=targetFloor;
- camera.position.set(ELEV.x,LEVEL_Y*floor+EYE,ELEV.z-3.0);
- yaw=Math.PI;pitch=0;closeElevator();updateBadge();showToast(targetFloor===0?'🛗 وصلت إلى الطابق الأول':'🛗 وصلت إلى الطابق الثاني');
+ if(zone!=='mall'||elevatorRide)return;
+ if(targetFloor===elevatorFloor){closeElevator();setElevatorDoors(true);showToast('🛗 أنت في هذا الطابق بالفعل');return;}
+ elevatorPanel.classList.remove('open');
+ clearMovement();
+ // أدخل اللاعب إلى الكابينة، ثم أغلق الباب وابدأ الحركة بعد لحظة قصيرة
+ camera.position.set(ELEV.x,LEVEL_Y*elevatorFloor+EYE,ELEV.z-.10);
+ yaw=Math.PI;pitch=0;
+ setElevatorDoors(false);
+ elevatorRide={from:elevatorFloor,to:targetFloor,t:0,wait:.85,duration:4.2};
+ showToast('🚪 الأبواب تُغلق...');
 }
 elevatorPanel.querySelectorAll('[data-floor]').forEach(b=>b.onclick=()=>useElevator(Number(b.dataset.floor)));
 elevatorPanel.querySelector('.elev-close').onclick=closeElevator;
@@ -995,6 +1029,27 @@ function animate() {
     s.mesh.position.set(0,yy-.08,zz);
   });
 
+  // انزلاق أبواب المصعد
+  elevatorDoors.forEach(d=>{if(d.userData.targetX!==undefined)d.position.x += (d.userData.targetX-d.position.x)*Math.min(1,dt*6);});
+  // رحلة المصعد الفعلية: الكابينة والكاميرا تتحركان معًا داخل البئر الزجاجي
+  if(elevatorRide){
+    if(elevatorRide.wait>0){elevatorRide.wait-=dt;}
+    else {
+      elevatorRide.t += dt/elevatorRide.duration;
+      const k=Math.min(1,elevatorRide.t), ease=k*k*(3-2*k);
+      const y0=LEVEL_Y*elevatorRide.from, y1=LEVEL_Y*elevatorRide.to;
+      const y=y0+(y1-y0)*ease;
+      elevatorCar.position.y=y;
+      camera.position.set(ELEV.x,y+EYE,ELEV.z-.10);
+      if(k>=1){
+        elevatorFloor=elevatorRide.to; floor=elevatorRide.to; elevatorRide=null;
+        setElevatorDoors(true); updateBadge();
+        camera.position.set(ELEV.x,LEVEL_Y*floor+EYE,ELEV.z-1.45);
+        showToast(floor===0?'🛗 وصلنا إلى الطابق الأول — الأبواب مفتوحة':'🛗 وصلنا إلى الطابق الثاني — الأبواب مفتوحة');
+      }
+    }
+  }
+
   const speed=settings.walk_speed*((keys['ShiftLeft']||keys['ShiftRight'])?1.8:1);
 
   /* ===== ركوب السلم ===== */
@@ -1035,12 +1090,23 @@ function animate() {
     if (keys['KeyD'] || keys['ArrowRight']) { mx += rx; mz += rz; }
     if (keys['KeyA'] || keys['ArrowLeft'])  { mx -= rx; mz -= rz; }
 
-    if(riding||transitioning||roomDialog.open||elevatorPanel.classList.contains("open")||document.getElementById("panel").classList.contains("open")){mx=0;mz=0;}
+    if(riding||elevatorRide||transitioning||roomDialog.open||elevatorPanel.classList.contains("open")||document.getElementById("panel").classList.contains("open")){mx=0;mz=0;}
     const len=Math.hypot(mx,mz);
     if (len > 0) {
       const nextX=camera.position.x+(mx/Math.max(1,len))*speed*dt,nextZ=camera.position.z+(mz/Math.max(1,len))*speed*dt;
-      if(zone==='mall'||!blockedShop(nextX,camera.position.z))camera.position.x=nextX;
-      if(zone==='mall'||!blockedShop(camera.position.x,nextZ))camera.position.z=nextZ;
+      const glassBlocked=(x,z)=>{
+        if(zone!=='mall') return false;
+        const r=.38; // نصف قطر اللاعب حتى لا يدخل جسمه داخل القزاز
+        return mallGlassColliders.some(c=>c.floor===floor && Math.abs(x-c.x)<c.hw+r && Math.abs(z-c.z)<c.hd+r);
+      };
+      if(zone==='mall'){
+        // نفحص كل محور منفصلاً حتى يقدر اللاعب ينزلق بمحاذاة القزاز بدون اختراقه
+        if(!glassBlocked(nextX,camera.position.z)) camera.position.x=nextX;
+        if(!glassBlocked(camera.position.x,nextZ)) camera.position.z=nextZ;
+      } else {
+        if(!blockedShop(nextX,camera.position.z))camera.position.x=nextX;
+        if(!blockedShop(camera.position.x,nextZ))camera.position.z=nextZ;
+      }
       bobT += dt * speed * 2.2;
     }
 
