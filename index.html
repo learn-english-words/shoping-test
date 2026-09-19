@@ -557,6 +557,7 @@ setElevatorDoors(false,true);
 const doors = [];
 const neonPulses = [];
 const adScreens = [];
+const closedStoreColliders = [];
 
 
 const storefronts=mallStoreRows.filter(s=>s.enabled).map(s=>({...s,color:new THREE.Color(s.color).getHex()}));
@@ -598,14 +599,32 @@ function buildStorefront(st, y) {
       item.position.set(st.side*(HALL_W/2-1.15),y+1.73,st.z+dz-.36+k*.36);scene.add(item);
     }
   }
-  const sign = makeSign(st.name, hex, 75);
-  sign.scale.set(.75,.5,.75);
-  sign.position.set(st.side * (HALL_W/2 - 0.6), y + 3.55, st.z);
-  sign.rotation.y = facing;
-  scene.add(sign);
+  // لوحة اسم واضحة من 3 اتجاهات: أمام + يمين + يسار
+  const signY=y+4.32, signX=st.side*(HALL_W/2-.82);
+  const frontSign=makeSign(st.name,st.open?'#eafaff':'#a9b4bf',72);
+  frontSign.scale.set(.68,.46,.68);frontSign.position.set(signX,signY,st.z);frontSign.rotation.y=facing;scene.add(frontSign);
+  // لوحتان جانبيتان بارزتان ليظهر الاسم عند القدوم من طرفي الممر
+  for(const dz of [-.46,.46]){
+    const sideSign=makeSign(st.name,st.open?'#eafaff':'#89939e',68);
+    sideSign.scale.set(.52,.40,.52);sideSign.position.set(st.side*(HALL_W/2-1.08),signY,st.z+dz);sideSign.rotation.y=0;scene.add(sideSign);
+  }
+  // صندوق اللوحة البارز يميز المحل المفتوح عن المغلق
+  const signBox=new THREE.Mesh(new THREE.BoxGeometry(.34,.82,3.8),new THREE.MeshStandardMaterial({color:st.open?0x17384b:0x2a3037,roughness:.32,metalness:.55,emissive:st.open?0x0a2635:0x000000,emissiveIntensity:st.open?.45:0}));
+  signBox.position.set(st.side*(HALL_W/2-.96),signY,st.z);scene.add(signBox);
+
+  // حالة الباب: المفتوح مدخل زجاجي مضيء، والمغلق شتر داكن واضح + تصادم فعلي
+  if(st.open){
+    shutter.material.opacity=.10;
+    const openGlow=new THREE.Mesh(new THREE.PlaneGeometry(2.9,3.05),new THREE.MeshBasicMaterial({color:0xbfefff,transparent:true,opacity:.07,side:THREE.DoubleSide}));
+    openGlow.position.set(st.side*(HALL_W/2-.69),y+1.55,st.z);openGlow.rotation.y=facing;scene.add(openGlow);
+  }else{
+    shutter.material.opacity=.98;
+    const lockSign=makeSign('🔒 مغلق — قريبًا','#d7e0e8',54,768,160);lockSign.scale.set(.34,.25,.34);lockSign.position.set(st.side*(HALL_W/2-.66),y+1.65,st.z);lockSign.rotation.y=facing;scene.add(lockSign);
+    closedStoreColliders.push({x:st.side*(HALL_W/2-.85),z:st.z,hw:.42,hd:1.48,floor:st.floor});
+  }
 
   const door = new THREE.Mesh(new THREE.PlaneGeometry(2.7,2.9),
-    new THREE.MeshBasicMaterial({ color: st.color, transparent:true, opacity: st.open ? 0.5 : 0.1, side:THREE.DoubleSide }));
+    new THREE.MeshBasicMaterial({ color: st.color, transparent:true, opacity: st.open ? 0.12 : 0.02, side:THREE.DoubleSide }));
   door.position.set(st.side * (HALL_W/2 - 0.7), y + 1.55, st.z);
   door.rotation.y = facing;
   door.userData.store = st;
@@ -1215,7 +1234,7 @@ function animate() {
       const glassBlocked=(x,z)=>{
         if(zone!=='mall') return false;
         const r=.38; // نصف قطر اللاعب حتى لا يدخل جسمه داخل القزاز
-        return mallGlassColliders.some(c=>c.floor===floor && Math.abs(x-c.x)<c.hw+r && Math.abs(z-c.z)<c.hd+r);
+        return [...mallGlassColliders,...closedStoreColliders].some(c=>c.floor===floor && Math.abs(x-c.x)<c.hw+r && Math.abs(z-c.z)<c.hd+r);
       };
       if(zone==='mall'){
         // نفحص كل محور منفصلاً حتى يقدر اللاعب ينزلق بمحاذاة القزاز بدون اختراقه
