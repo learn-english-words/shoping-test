@@ -599,43 +599,47 @@ function buildStorefront(st, y) {
       item.position.set(st.side*(HALL_W/2-1.15),y+1.73,st.z+dz-.36+k*.36);scene.add(item);
     }
   }
-  // لوحة اسم واضحة من 3 اتجاهات: أمام + يمين + يسار
-  const signY=y+4.32, signX=st.side*(HALL_W/2-.82);
-  const frontSign=makeSign(st.name,st.open?'#eafaff':'#a9b4bf',72);
-  frontSign.scale.set(.68,.46,.68);frontSign.position.set(signX,signY,st.z);frontSign.rotation.y=facing;scene.add(frontSign);
-  // لوحتان جانبيتان بارزتان ليظهر الاسم عند القدوم من طرفي الممر
-  for(const dz of [-.46,.46]){
-    const sideSign=makeSign(st.name,st.open?'#eafaff':'#89939e',68);
-    sideSign.scale.set(.52,.40,.52);sideSign.position.set(st.side*(HALL_W/2-1.08),signY,st.z+dz);sideSign.rotation.y=0;scene.add(sideSign);
+  // لوحة متجر نظيفة: وجه أمامي + وجهان جانبيان بدون الصندوق الضخم القديم.
+  const signY=y+4.18, signX=st.side*(HALL_W/2-.70);
+  const frontSign=makeSign(st.name,st.open?'#f4fbff':'#a9b4bf',70,900,190);
+  frontSign.scale.set(.48,.31,.48);frontSign.position.set(signX,signY,st.z);frontSign.rotation.y=facing;scene.add(frontSign);
+  // لوحتان جانبيتان صغيرتان على طرفي الواجهة، تقرآن عند القدوم من اليمين أو اليسار.
+  for(const dz of [-2.25,2.25]){
+    const sideSign=makeSign(st.name,st.open?'#f4fbff':'#89939e',58,760,170);
+    sideSign.scale.set(.32,.25,.32);sideSign.position.set(st.side*(HALL_W/2-1.05),signY-.02,st.z+dz);sideSign.rotation.y=0;scene.add(sideSign);
   }
-  // صندوق اللوحة البارز يميز المحل المفتوح عن المغلق
-  const signBox=new THREE.Mesh(new THREE.BoxGeometry(.34,.82,3.8),new THREE.MeshStandardMaterial({color:st.open?0x17384b:0x2a3037,roughness:.32,metalness:.55,emissive:st.open?0x0a2635:0x000000,emissiveIntensity:st.open?.45:0}));
-  signBox.position.set(st.side*(HALL_W/2-.96),signY,st.z);scene.add(signBox);
 
-  // حالة الباب: المفتوح مدخل زجاجي مضيء، والمغلق شتر داكن واضح + تصادم فعلي
+  // حالة الباب: المحل المفتوح له بابان زجاجيان منزلقان مثل المصعد، والمغلق فقط له شتر وتصادم.
+  let glassPair=null;
   if(st.open){
-    shutter.material.opacity=.10;
-    const openGlow=new THREE.Mesh(new THREE.PlaneGeometry(2.9,3.05),new THREE.MeshBasicMaterial({color:0xbfefff,transparent:true,opacity:.07,side:THREE.DoubleSide}));
-    openGlow.position.set(st.side*(HALL_W/2-.69),y+1.55,st.z);openGlow.rotation.y=facing;scene.add(openGlow);
+    shutter.material.opacity=.035;
+    const glassMat=new THREE.MeshPhysicalMaterial({color:0xc9efff,transparent:true,opacity:.22,roughness:.08,metalness:.08,transmission:.72,thickness:.08,side:THREE.DoubleSide,depthWrite:false});
+    const paneGeo=new THREE.PlaneGeometry(1.28,3.05);
+    const leftPane=new THREE.Mesh(paneGeo,glassMat), rightPane=new THREE.Mesh(paneGeo,glassMat.clone());
+    const doorX=st.side*(HALL_W/2-.67);
+    for(const [pane,dz] of [[leftPane,-.66],[rightPane,.66]]){
+      pane.position.set(doorX,y+1.58,st.z+dz);pane.rotation.y=facing;scene.add(pane);
+      const edge=new THREE.LineSegments(new THREE.EdgesGeometry(paneGeo),new THREE.LineBasicMaterial({color:0xbfeeff,transparent:true,opacity:.72}));pane.add(edge);
+    }
+    glassPair={left:leftPane,right:rightPane,baseL:st.z-.66,baseR:st.z+.66,open:0,target:0};
   }else{
     shutter.material.opacity=.98;
     const lockSign=makeSign('🔒 مغلق — قريبًا','#d7e0e8',54,768,160);lockSign.scale.set(.34,.25,.34);lockSign.position.set(st.side*(HALL_W/2-.66),y+1.65,st.z);lockSign.rotation.y=facing;scene.add(lockSign);
     closedStoreColliders.push({x:st.side*(HALL_W/2-.85),z:st.z,hw:.42,hd:1.48,floor:st.floor});
   }
 
-  const door = new THREE.Mesh(new THREE.PlaneGeometry(2.7,2.9),
-    new THREE.MeshBasicMaterial({ color: st.color, transparent:true, opacity: st.open ? 0.12 : 0.02, side:THREE.DoubleSide }));
-  door.position.set(st.side * (HALL_W/2 - 0.7), y + 1.55, st.z);
+  // سطح تفاعل شفاف: الضغط على المحل المفتوح يفتح الزجاج، والدخول يتم تلقائياً عند الاقتراب من المدخل.
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(2.85,3.15),
+    new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.001, side:THREE.DoubleSide, depthWrite:false }));
+  door.position.set(st.side * (HALL_W/2 - 0.64), y + 1.58, st.z);
   door.rotation.y = facing;
   door.userData.store = st;
+  door.userData.glassPair = glassPair;
   scene.add(door);
   doors.push(door);
 
-  const tag = makeSign(st.open ? '👆 ادخل المحل' : '🔒 قريبًا', st.open ? '#ffffff' : '#888899', 60, 512, 128);
-  tag.scale.set(.42,.25,.42);
-  tag.position.set(st.side * (HALL_W/2 - 0.6), y + 3.97, st.z);
-  tag.rotation.y = facing;
-  scene.add(tag);
+  const tag = makeSign(st.open ? '👆 اضغط لفتح الباب' : '🔒 قريبًا', st.open ? '#eafaff' : '#888899', 54, 620, 140);
+  tag.scale.set(.31,.20,.31);tag.position.set(st.side*(HALL_W/2-.58),y+3.68,st.z);tag.rotation.y=facing;scene.add(tag);
 }
 mallStoresF0.forEach(s => buildStorefront(s, 0));
 mallStoresF1.forEach(s => buildStorefront(s, LEVEL_Y));
@@ -912,8 +916,10 @@ renderer.domElement.addEventListener('pointerup',e=>{
   if (dhits.length) {
     const d = dhits[0].object;
     if (d.userData.isExit) teleport('mall');
-    else if (d.userData.store?.open) teleport('shop',d.userData.store);
-    else showToast('🔒 هذا المحل قريبًا — ترقبوا الافتتاح!');
+    else if (d.userData.store?.open) {
+      if(d.userData.glassPair){d.userData.glassPair.target=1;showToast('🚪 تم فتح الباب — تقدم إلى المدخل');}
+      else teleport('shop',d.userData.store);
+    } else showToast('🔒 هذا المحل قريبًا — ترقبوا الافتتاح!');
     return;
   }
 
@@ -1211,6 +1217,19 @@ function animate() {
       updateBadge();
     }
   } else {
+    // تحريك أبواب المتاجر الزجاجية، ثم دخول المتجر تلقائياً عند الوقوف أمام الباب المفتوح.
+    if(zone==='mall'){
+      for(const d of doors){
+        const gp=d.userData?.glassPair;if(!gp)continue;
+        gp.open += (gp.target-gp.open)*Math.min(1,dt*8);
+        gp.left.position.z=gp.baseL-1.02*gp.open;
+        gp.right.position.z=gp.baseR+1.02*gp.open;
+        if(gp.open>.86 && d.userData.store?.floor===floor){
+          const st=d.userData.store, dx=Math.abs(camera.position.x-d.position.x), dz=Math.abs(camera.position.z-st.z);
+          if(dx<1.25 && dz<1.18){teleport('shop',st);break;}
+        }
+      }
+    }
     /* ===== مشي عادي ===== */
     if (zone === 'mall') {
       // مناطق صعود/نزول السلم
