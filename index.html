@@ -581,7 +581,7 @@ function buildStorefront(st, y) {
     new THREE.MeshStandardMaterial({ color:0x1a1a20, roughness:0.25, metalness:0.9, transparent:true, opacity: st.open ? 0.2 : 0.94 }));
   shutter.position.set(st.side * (HALL_W/2 - 0.5), y + 1.60, st.z);
   shutter.rotation.y = facing;
-  scene.add(shutter);
+  if(!st.open) scene.add(shutter);
 
 
   // عمق حقيقي للمتجر + إضاءة عرض داخلية
@@ -599,20 +599,26 @@ function buildStorefront(st, y) {
       item.position.set(st.side*(HALL_W/2-1.15),y+1.73,st.z+dz-.36+k*.36);scene.add(item);
     }
   }
-  // لوحة متجر نظيفة: وجه أمامي + وجهان جانبيان بدون الصندوق الضخم القديم.
-  const signY=y+4.18, signX=st.side*(HALL_W/2-.70);
-  const frontSign=makeSign(st.name,st.open?'#f4fbff':'#a9b4bf',70,900,190);
-  frontSign.scale.set(.48,.31,.48);frontSign.position.set(signX,signY,st.z);frontSign.rotation.y=facing;scene.add(frontSign);
-  // لوحتان جانبيتان صغيرتان على طرفي الواجهة، تقرآن عند القدوم من اليمين أو اليسار.
-  for(const dz of [-2.25,2.25]){
-    const sideSign=makeSign(st.name,st.open?'#f4fbff':'#89939e',58,760,170);
-    sideSign.scale.set(.32,.25,.32);sideSign.position.set(st.side*(HALL_W/2-1.05),signY-.02,st.z+dz);sideSign.rotation.y=0;scene.add(sideSign);
+  // لوحة اسم مرتبة فوق المدخل: أمامية واضحة + لوحتان جانبيتان مثبتتان على طرفي الواجهة.
+  const signY=y+4.34, signX=st.side*(HALL_W/2-.66);
+  const signColor=st.open?'#f4fbff':'#9aa7b3';
+  const frontSign=makeSign(st.name,signColor,72,1024,190);
+  frontSign.scale.set(.42,.25,.42);
+  frontSign.position.set(signX,signY,st.z);
+  frontSign.rotation.y=facing;
+  scene.add(frontSign);
+  // الجانبان يبرزان قليلًا من الواجهة حتى يقرأ الاسم القادم من اليمين أو اليسار، بدون ألواح طافية بالسقف.
+  for(const dz of [-2.55,2.55]){
+    const sideSign=makeSign(st.name,signColor,58,760,170);
+    sideSign.scale.set(.25,.19,.25);
+    sideSign.position.set(st.side*(HALL_W/2-.86),signY-.04,st.z+dz);
+    sideSign.rotation.y = dz<0 ? 0 : Math.PI;
+    scene.add(sideSign);
   }
 
   // حالة الباب: المحل المفتوح له بابان زجاجيان منزلقان مثل المصعد، والمغلق فقط له شتر وتصادم.
   let glassPair=null;
   if(st.open){
-    shutter.material.opacity=.035;
     const glassMat=new THREE.MeshPhysicalMaterial({color:0xc9efff,transparent:true,opacity:.22,roughness:.08,metalness:.08,transmission:.72,thickness:.08,side:THREE.DoubleSide,depthWrite:false});
     const paneGeo=new THREE.PlaneGeometry(1.28,3.05);
     const leftPane=new THREE.Mesh(paneGeo,glassMat), rightPane=new THREE.Mesh(paneGeo,glassMat.clone());
