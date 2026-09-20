@@ -599,21 +599,40 @@ function buildStorefront(st, y) {
       item.position.set(st.side*(HALL_W/2-1.15),y+1.73,st.z+dz-.36+k*.36);scene.add(item);
     }
   }
-  // لوحة اسم مرتبة فوق المدخل: أمامية واضحة + لوحتان جانبيتان مثبتتان على طرفي الواجهة.
-  const signY=y+4.34, signX=st.side*(HALL_W/2-.66);
-  const signColor=st.open?'#f4fbff':'#9aa7b3';
-  const frontSign=makeSign(st.name,signColor,72,1024,190);
-  frontSign.scale.set(.42,.25,.42);
-  frontSign.position.set(signX,signY,st.z);
-  frontSign.rotation.y=facing;
-  scene.add(frontSign);
-  // الجانبان يبرزان قليلًا من الواجهة حتى يقرأ الاسم القادم من اليمين أو اليسار، بدون ألواح طافية بالسقف.
-  for(const dz of [-2.55,2.55]){
-    const sideSign=makeSign(st.name,signColor,58,760,170);
-    sideSign.scale.set(.25,.19,.25);
-    sideSign.position.set(st.side*(HALL_W/2-.86),signY-.04,st.z+dz);
-    sideSign.rotation.y = dz<0 ? 0 : Math.PI;
-    scene.add(sideSign);
+  // لوحة اسم المتجر: صندوق كحلي عريض فوق المدخل + وجهان جانبيان مثل المرجع.
+  const signY=y+4.18;
+  const signX=st.side*(HALL_W/2-.80);
+  const signColor=st.open?'#ffffff':'#aeb8c2';
+  const signBoxMat=new THREE.MeshStandardMaterial({
+    color:0x071524, roughness:.34, metalness:.42,
+    emissive:0x02070d, emissiveIntensity:.16
+  });
+  const cyanMat=new THREE.MeshBasicMaterial({color:0xbff8ff});
+
+  // الجسم الأمامي العريض.
+  const mainBoard=new THREE.Mesh(new THREE.BoxGeometry(.34,.92,5.95),signBoxMat);
+  mainBoard.position.set(signX,signY,st.z);scene.add(mainBoard);
+
+  // اسم كبير وواضح + أيقونة شنطة في منتصف اللوحة.
+  const mainText=makeSign('🛍  '+st.name,signColor,92,1280,220);
+  mainText.scale.set(.66,.43,.66);
+  mainText.position.set(st.side*(HALL_W/2-.975),signY,st.z);
+  mainText.rotation.y=facing;scene.add(mainText);
+
+  // خطا LED رأسيان على طرفي اللوحة الأمامية.
+  for(const dz of [-2.82,2.82]){
+    const led=new THREE.Mesh(new THREE.BoxGeometry(.04,.70,.055),cyanMat);
+    led.position.set(st.side*(HALL_W/2-.985),signY,st.z+dz);scene.add(led);
+  }
+
+  // جناحان بارزان: الاسم مقروء للقادم من يمين أو يسار الممر.
+  for(const dz of [-3.04,3.04]){
+    const wing=new THREE.Mesh(new THREE.BoxGeometry(1.18,.92,.18),signBoxMat);
+    wing.position.set(st.side*(HALL_W/2-1.20),signY,st.z+dz);scene.add(wing);
+    const sideText=makeSign('🛍 '+st.name,signColor,72,1024,220);
+    sideText.scale.set(.30,.34,.30);
+    sideText.position.set(st.side*(HALL_W/2-1.20),signY,st.z+dz+(dz<0?-.105:.105));
+    sideText.rotation.y=dz<0?Math.PI:0;scene.add(sideText);
   }
 
   // حالة الباب: المحل المفتوح له بابان زجاجيان منزلقان مثل المصعد، والمغلق فقط له شتر وتصادم.
@@ -644,8 +663,6 @@ function buildStorefront(st, y) {
   scene.add(door);
   doors.push(door);
 
-  const tag = makeSign(st.open ? '👆 اضغط لفتح الباب' : '🔒 قريبًا', st.open ? '#eafaff' : '#888899', 54, 620, 140);
-  tag.scale.set(.31,.20,.31);tag.position.set(st.side*(HALL_W/2-.58),y+3.68,st.z);tag.rotation.y=facing;scene.add(tag);
 }
 mallStoresF0.forEach(s => buildStorefront(s, 0));
 mallStoresF1.forEach(s => buildStorefront(s, LEVEL_Y));
