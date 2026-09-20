@@ -596,13 +596,16 @@ function buildStorefront(st, y) {
   if(!st.open) scene.add(interior);
   const blackHeader=new THREE.Mesh(new THREE.BoxGeometry(.16,.78,6.45),new THREE.MeshStandardMaterial({color:0x17191b,roughness:.32,metalness:.28}));
   blackHeader.position.set(st.side*(HALL_W/2-.73),y+3.72,st.z);scene.add(blackHeader);
-  // رفوف ومنتجات مبسطة مرئية من الممر
-  const shelfMat=new THREE.MeshStandardMaterial({color:0xb9c7d3,roughness:.55});
-  for(const dz of [-1.75,0,1.75]){
-    const shelf=new THREE.Mesh(new THREE.BoxGeometry(.22,.08,1.25),shelfMat);shelf.position.set(st.side*(HALL_W/2-1.02),y+1.45,st.z+dz);scene.add(shelf);
-    for(let k=0;k<3;k++){
-      const item=new THREE.Mesh(new THREE.BoxGeometry(.28,.48,.24),new THREE.MeshStandardMaterial({color:[0xc89f74,0x8397a5,0x9f826f][k],roughness:.45}));
-      item.position.set(st.side*(HALL_W/2-1.15),y+1.73,st.z+dz-.36+k*.36);scene.add(item);
+  // الديكور الوهمي (الرفوف والكتب/الصناديق) يظهر فقط للمحلات المغلقة.
+  // المحل المفتوح يجب أن تكون واجهته ومدخله خاليين تماماً حتى يظهر المتجر الحقيقي عند الدخول.
+  if(!st.open){
+    const shelfMat=new THREE.MeshStandardMaterial({color:0xb9c7d3,roughness:.55});
+    for(const dz of [-1.75,0,1.75]){
+      const shelf=new THREE.Mesh(new THREE.BoxGeometry(.22,.08,1.25),shelfMat);shelf.position.set(st.side*(HALL_W/2-1.02),y+1.45,st.z+dz);scene.add(shelf);
+      for(let k=0;k<3;k++){
+        const item=new THREE.Mesh(new THREE.BoxGeometry(.28,.48,.24),new THREE.MeshStandardMaterial({color:[0xc89f74,0x8397a5,0x9f826f][k],roughness:.45}));
+        item.position.set(st.side*(HALL_W/2-1.15),y+1.73,st.z+dz-.36+k*.36);scene.add(item);
+      }
     }
   }
   // لوحة اسم المتجر: صندوق كحلي عريض فوق المدخل + وجهان جانبيان مثل المرجع.
