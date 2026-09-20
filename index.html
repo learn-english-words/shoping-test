@@ -571,8 +571,11 @@ function buildStorefront(st, y) {
   const frame = new THREE.Mesh(new THREE.PlaneGeometry(6.5,4.10),
     new THREE.MeshBasicMaterial({ color: st.color, transparent:true, opacity: st.open ? 0.72 : 0.22, blending:THREE.AdditiveBlending }));
   frame.position.set(x, y + 2.13, st.z); frame.rotation.y = facing;
-  scene.add(frame);
-  neonPulses.push({ mesh: frame, base: st.open ? 0.72 : 0.22, open: st.open });
+  // لا نضع أي سطح يغطي فتحة المحل المفتوح. هذا الـPlane كان يظهر كحاجز أبيض/مضيء أمام المدخل.
+  if(!st.open){
+    scene.add(frame);
+    neonPulses.push({ mesh: frame, base: 0.22, open: false });
+  }
   // إطار أبيض/سماوي يعطي واجهة متجر حديثة بدل لوحة نيون مسطحة
   const trimMat=new THREE.MeshBasicMaterial({color:st.open?FUTURE.cyan:0xdce7ef,transparent:true,opacity:st.open?.92:.55});
   for(const yy of [y+.16,y+4.08]){const t=new THREE.Mesh(new THREE.BoxGeometry(.055,.055,6.55),trimMat);t.position.set(st.side*(HALL_W/2-.62),yy,st.z);t.rotation.y=facing;scene.add(t);}
@@ -587,7 +590,10 @@ function buildStorefront(st, y) {
   // عمق حقيقي للمتجر + إضاءة عرض داخلية
   const interiorMat=new THREE.MeshStandardMaterial({color:0xeaf2f8,roughness:.5,emissive:0xbfdfff,emissiveIntensity:.12});
   const interior=new THREE.Mesh(new THREE.BoxGeometry(.18,3.55,5.75),interiorMat);
-  interior.position.set(st.side*(HALL_W/2-.92),y+1.82,st.z);scene.add(interior);
+  interior.position.set(st.side*(HALL_W/2-.92),y+1.82,st.z);
+  // الجدار الداخلي القديم كان يسد واجهة المحلات المفتوحة بالكامل.
+  // نحتفظ به فقط للمحل المغلق؛ المفتوح يبقى مدخله مكشوفاً خلف الباب الزجاجي.
+  if(!st.open) scene.add(interior);
   const blackHeader=new THREE.Mesh(new THREE.BoxGeometry(.16,.78,6.45),new THREE.MeshStandardMaterial({color:0x17191b,roughness:.32,metalness:.28}));
   blackHeader.position.set(st.side*(HALL_W/2-.73),y+3.72,st.z);scene.add(blackHeader);
   // رفوف ومنتجات مبسطة مرئية من الممر
