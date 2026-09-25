@@ -1128,6 +1128,9 @@ document.getElementById('room-form').onsubmit=async(e)=>{
   if(joiningPublic){
    room=requireOK(await cloudDB.rpc('mall_join_public'));
    history.replaceState(null,'',location.pathname+location.search);
+   const spawnHash=[...connectionId].reduce((sum,c)=>sum+c.charCodeAt(0),0),spawnAngle=(spawnHash%8)*(Math.PI/4),spawnRadius=1.8+(spawnHash%3)*.55;
+   camera.position.x=Math.max(-(HALL_W/2-1),Math.min(HALL_W/2-1,settings.spawn_x+Math.sin(spawnAngle)*spawnRadius));
+   camera.position.z=Math.max(-(HALL_L/2-1.5),Math.min(HALL_L/2-1.5,settings.spawn_z+Math.cos(spawnAngle)*spawnRadius));
   }else if(hash.has('room')&&hash.has('invite')){
    room={id:hash.get('room'),token:hash.get('invite')};
    requireOK(await cloudDB.rpc('shop_join_room',{room:room.id,token:room.token}));
@@ -1332,7 +1335,8 @@ function animate() {
   }
 
   camera.rotation.y=yaw;camera.rotation.x=pitch;
-  updateVisitors(dt);renderer.render(scene,camera);
+  updateVisitors(dt);
+  renderer.render(scene,camera);
 }
 animate();
 
