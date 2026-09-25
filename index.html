@@ -116,6 +116,8 @@ body.panel-open #mobile-stick{visibility:hidden}
 
 <script type="module">
 import * as THREE from 'three';
+async function createCharacter(){const module=await import('./characters.js');return module.createCharacter();}
+const CUSTOM_CHARACTER_ENABLED=true;
 
 import {createDB,allRows,httpURL,requireOK} from './config.js';
 let settings={"id":1,"name":"النيون مول","slogan":"تسوق من مكانك","store_url":"","logo_url":"","floor_color":"#d9d2c4","wall_color":"#e9e2d2","shelf_color":"#253347","accent_color":"#d4a94e","light_color":"#fff2e0","light_intensity":1.15,"room_width":34,"room_depth":34,"room_height":12,"spawn_x":0,"spawn_z":22,"spawn_yaw":0,"walk_speed":4,"multiplayer_enabled":true},mallStoreRows=[{"id":"ground-0","name":"🎮 قيمنق ستور","side":-1,"z":-18,"floor":0,"color":"#7b2ff7","open":false,"enabled":true,"store_url":""},{"id":"ground-1","name":"🎧 ساوند سيتي","side":-1,"z":-9,"floor":0,"color":"#00a8b5","open":false,"enabled":true,"store_url":""},{"id":"ground-2","name":"👟 سنيكرز هب","side":-1,"z":0,"floor":0,"color":"#00b36b","open":false,"enabled":true,"store_url":""},{"id":"ground-3","name":"☕ قهوة رقمية","side":-1,"z":9,"floor":0,"color":"#d4a94e","open":false,"enabled":true,"store_url":""},{"id":"ground-4","name":"💻 تك زون","side":1,"z":-18,"floor":0,"color":"#00a8b5","open":false,"enabled":true,"store_url":""},{"id":"ground-5","name":"👜 ستايل بوتيك","side":1,"z":-9,"floor":0,"color":"#d45494","open":false,"enabled":true,"store_url":""},{"id":"accessories","name":"📱 إكسسواراتك","side":1,"z":0,"floor":0,"color":"#d4a94e","open":true,"enabled":true,"store_url":""},{"id":"ground-7","name":"🕶️ أوبتكس","side":1,"z":9,"floor":0,"color":"#7b2ff7","open":false,"enabled":true,"store_url":""},{"id":"upper-0","name":"🍔 برجر نيون","side":-1,"z":-18,"floor":1,"color":"#d4543a","open":false,"enabled":true,"store_url":""},{"id":"upper-1","name":"🍦 آيس كريم لاب","side":-1,"z":-9,"floor":1,"color":"#d48fb0","open":false,"enabled":true,"store_url":""},{"id":"upper-2","name":"📚 مكتبة المول","side":-1,"z":0,"floor":1,"color":"#4a7bd4","open":false,"enabled":true,"store_url":""},{"id":"upper-3","name":"🎬 سينما مول","side":-1,"z":9,"floor":1,"color":"#8a2fd4","open":false,"enabled":true,"store_url":""},{"id":"upper-4","name":"🏋️ فتنس زون","side":1,"z":-18,"floor":1,"color":"#3ad48a","open":false,"enabled":true,"store_url":""},{"id":"upper-5","name":"🧸 عالم الأطفال","side":1,"z":-9,"floor":1,"color":"#d4b02f","open":false,"enabled":true,"store_url":""},{"id":"upper-6","name":"💈 صالون النيون","side":1,"z":9,"floor":1,"color":"#2fa8d4","open":false,"enabled":true,"store_url":""},{"id":"upper-7","name":"🛋️ هوم ستايل","side":1,"z":-27,"floor":1,"color":"#b56a3a","open":false,"enabled":true,"store_url":""}],screenRows=[{"id":"ad-1","title":"عرض اليوم","subtitle":"خصم 30% على الكفرات","floor":0,"x":0,"z":-27,"center_y":3.5,"rotation":0,"hanging":true,"width":2.9,"height":1.7,"image_url":"","link_url":"","enabled":true},{"id":"ad-2","title":"شحن مجاني","subtitle":"للطلبات فوق 200 ر.س","floor":0,"x":0,"z":23,"center_y":3.5,"rotation":0,"hanging":true,"width":2.9,"height":1.7,"image_url":"","link_url":"","enabled":true},{"id":"ad-3","title":"وصل حديثاً","subtitle":"سماعات الألعاب","floor":1,"x":0,"z":-27,"center_y":3.15,"rotation":0,"hanging":true,"width":2.9,"height":1.7,"image_url":"","link_url":"","enabled":true},{"id":"ad-4","title":"باور بانك","subtitle":"سعة 20000mAh","floor":1,"x":0,"z":23,"center_y":3.15,"rotation":0,"hanging":true,"width":2.9,"height":1.7,"image_url":"","link_url":"","enabled":true},{"id":"ad-5","title":"إعلانك هنا","subtitle":"مساحة إعلانية متاحة","floor":0,"x":-12.38,"z":-13.5,"center_y":2.35,"rotation":90,"hanging":false,"width":2.35,"height":1.4,"image_url":"","link_url":"","enabled":true},{"id":"ad-6","title":"حماية شاشة","subtitle":"تركيب داخل المحل","floor":0,"x":12.38,"z":4.5,"center_y":2.35,"rotation":-90,"hanging":false,"width":2.35,"height":1.4,"image_url":"","link_url":"","enabled":true},{"id":"ad-7","title":"عرض اليوم","subtitle":"تسوق من مكانك","floor":1,"x":-12.38,"z":4.5,"center_y":2.15,"rotation":90,"hanging":false,"width":2.35,"height":1.4,"image_url":"","link_url":"","enabled":true},{"id":"ad-8","title":"شحن مجاني","subtitle":"للطلبات فوق 200 ر.س","floor":1,"x":12.38,"z":-13.5,"center_y":2.15,"rotation":-90,"hanging":false,"width":2.35,"height":1.4,"image_url":"","link_url":"","enabled":true}];
@@ -1047,7 +1049,7 @@ document.getElementById('room-submit').textContent=invited?'الانضمام ل�
 socialButton.hidden=!settings.multiplayer_enabled||new URLSearchParams(location.search).has('preview');
 socialButton.onclick=()=>{clearMovement();roomDialog.showModal();};
 if(invited&&!socialButton.hidden)roomDialog.showModal();
-setInterval(async()=>{if(!roomConnected||!roomId)return;try{const valid=requireOK(await cloudDB.rpc('shop_can_join_topic',{topic:'shop:'+roomId}));if(!valid){await cloudDB.removeChannel(roomChannel);roomChannel=null;roomConnected=false;peers.forEach(p=>{scene.remove(p.object);disposeObject(p.object)});peers.clear();socialButton.textContent='دخول عام';document.getElementById('room-status').textContent='انتهت صلاحية الجلسة. غادر ثم ادخل مجددًا.';roomDialog.showModal();clearMovement();}}catch{}},60000);
+setInterval(async()=>{if(!roomConnected||!roomId)return;try{const valid=requireOK(await cloudDB.rpc('shop_can_join_topic',{topic:'shop:'+roomId}));if(!valid){await cloudDB.removeChannel(roomChannel);roomChannel=null;roomConnected=false;peers.forEach(p=>{scene.remove(p.object);disposeVisitor(p)});peers.clear();socialButton.textContent='دخول عام';document.getElementById('room-status').textContent='انتهت صلاحية الجلسة. غادر ثم ادخل مجددًا.';roomDialog.showModal();clearMovement();}}catch{}},60000);
 document.getElementById('room-close').onclick=()=>roomDialog.close();
 document.getElementById('room-copy').onclick=async()=>{
  try{await navigator.clipboard.writeText(location.href);document.getElementById('room-status').textContent='تم نسخ رابط الدعوة. أرسله لأخوك.';}
@@ -1055,25 +1057,25 @@ document.getElementById('room-copy').onclick=async()=>{
 };
 document.getElementById('room-leave').onclick=async()=>{
  if(roomChannel)await cloudDB.removeChannel(roomChannel);if(roomId)await cloudDB.rpc('shop_leave_room',{room:roomId});roomChannel=null;roomConnected=false;roomId=null;publicRoom=false;document.getElementById('room-title').textContent='تسوقوا مع بعض';document.getElementById('room-submit').textContent='إنشاء غرفة خاصة';document.getElementById('invite-link').hidden=true;
- peers.forEach(p=>{scene.remove(p.object);disposeObject(p.object);});peers.clear();
+ peers.forEach(p=>{scene.remove(p.object);disposeVisitor(p);});peers.clear();
  document.getElementById('room-copy').hidden=true;document.getElementById('room-leave').hidden=true;
  document.getElementById('room-form').hidden=false;document.getElementById('room-status').textContent='غادرت الغرفة.';
  socialButton.textContent='تسوق مع غيرك';
  history.replaceState(null,'',location.pathname+location.search);
 };
 function makeVisitor(name,id){
- const object=new THREE.Group();
+ const object=new THREE.Group();const fallback=new THREE.Group();object.add(fallback);
  const hue=[...id].reduce((sum,c)=>sum+c.charCodeAt(0),0)%360;
  const color=new THREE.Color().setHSL(hue/360,.35,.42);
  const body=new THREE.Mesh(new THREE.CapsuleGeometry(.24,.65,4,8),new THREE.MeshStandardMaterial({color,roughness:.8}));
- body.position.y=.94;object.add(body);
+ body.position.y=.94;fallback.add(body);
  const head=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),new THREE.MeshStandardMaterial({color:0xdfb99b}));
- head.position.y=1.62;object.add(head);
+ head.position.y=1.62;fallback.add(head);
  const nose=new THREE.Mesh(new THREE.SphereGeometry(.055,8,6),new THREE.MeshStandardMaterial({color:0xc79978}));
- nose.position.set(0,1.61,-.20);object.add(nose);
+ nose.position.set(0,1.61,-.20);fallback.add(nose);
  for(const x of [-.15,.15]){
   const leg=new THREE.Mesh(new THREE.CylinderGeometry(.07,.08,.55,8),new THREE.MeshStandardMaterial({color:0x26374d}));
-  leg.position.set(x,.35,0);object.add(leg);
+  leg.position.set(x,.35,0);fallback.add(leg);
  }
  const cv=document.createElement('canvas');cv.width=512;cv.height=128;const ctx=cv.getContext('2d');
  ctx.fillStyle='#26374de6';ctx.beginPath();ctx.roundRect(4,4,504,120,24);ctx.fill();
@@ -1081,8 +1083,11 @@ function makeVisitor(name,id){
  const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;
  const label=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false}));label.position.y=2.18;label.scale.set(1.65,.4125,1);object.add(label);
  object.position.set(settings.spawn_x,0,settings.spawn_z);scene.add(object);
- return{object,target:new THREE.Vector3(settings.spawn_x,0,settings.spawn_z),zone:null,storeId:null,yaw:0,lastSeen:Date.now()};
+ const peer={id,object,target:new THREE.Vector3(settings.spawn_x,0,settings.spawn_z),zone:null,storeId:null,yaw:0,lastSeen:Date.now(),avatar:null,removed:false};
+ if(CUSTOM_CHARACTER_ENABLED)createCharacter().then(avatar=>{if(peer.removed){avatar.dispose();return;}peer.avatar=avatar;object.remove(fallback);disposeObject(fallback);object.add(avatar.root);}).catch(error=>{console.warn('Character unavailable:',error.message);showToast('تعذر تحميل الشخصية ثلاثية الأبعاد.');});
+ return peer;
 }
+function disposeVisitor(p){p.removed=true;p.avatar?.dispose();disposeObject(p.object);}
 function syncVisitors(){
  const state=roomChannel.presenceState(),active=new Set();
  for(const entries of Object.values(state))for(const entry of entries){
@@ -1090,13 +1095,15 @@ function syncVisitors(){
   active.add(entry.id);
   if(!peers.has(entry.id)&&peers.size<11)peers.set(entry.id,makeVisitor(entry.name,entry.id));
  }
- for(const [id,p] of peers)if(!active.has(id)){scene.remove(p.object);disposeObject(p.object);peers.delete(id);}
+ for(const [id,p] of peers)if(!active.has(id)){scene.remove(p.object);disposeVisitor(p);peers.delete(id);}
  socialButton.textContent=(publicRoom?'المول العام':'الغرفة الخاصة')+' · '+(peers.size+1)+' أشخاص';
 }
 function updateVisitors(dt){
  for(const p of peers.values()){
   p.object.visible=p.zone===zone&&(zone!=="shop"||p.storeId===activeStore?.id);
-  p.object.position.lerp(p.target,1-Math.exp(-dt*12));
+  const distance=p.object.position.distanceTo(p.target);
+  if(distance>8)p.object.position.copy(p.target);else p.object.position.lerp(p.target,1-Math.exp(-dt*12));
+  if(p.object.visible)p.avatar?.update(dt,distance>8?0:distance>.025?Math.min(4,distance*12):0);
   const diff=Math.atan2(Math.sin(p.yaw-p.object.rotation.y),Math.cos(p.yaw-p.object.rotation.y));
   p.object.rotation.y+=diff*(1-Math.exp(-dt*12));
  }
